@@ -257,7 +257,7 @@ if __name__ == "__main__":
     # Create workers
     workers = []
     for i in range(para):
-        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path))
+        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path, para))
         workers.append(p)
 
     # Create S3 workers
