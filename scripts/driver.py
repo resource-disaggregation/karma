@@ -56,7 +56,7 @@ def worker(quit_signal, q, resq, s3_queues, dir_host, dir_porta, dir_portb, bloc
     # monitor_q.cancel_join_thread()
 
     for i in range(para):
-        s3_queues.cancel_join_thread()
+        s3_queues[i].cancel_join_thread()
     
     client = JiffyClient(dir_host, dir_porta, dir_portb)
     # s3 = boto3.client('s3')
