@@ -50,12 +50,12 @@ def map_file_to_worker(filename, num_workers):
 #         time.sleep(1)
 
 
-def worker(quit_signal, q, resq, monitor_q, dir_host, dir_porta, dir_portb, block_size, backing_path):
+def worker(quit_signal, q, resq, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path):
     # Initialize
     # Connect the directory server with the corresponding port numbers
-    monitor_q.cancel_join_thread()
+    # monitor_q.cancel_join_thread()
     client = JiffyClient(dir_host, dir_porta, dir_portb)
-    s3 = boto3.client('s3')
+    # s3 = boto3.client('s3')
     buf = 'a' * block_size
     in_jiffy = {}
     jiffy_create_ts = {}
@@ -75,7 +75,7 @@ def worker(quit_signal, q, resq, monitor_q, dir_host, dir_porta, dir_portb, bloc
             break
         filename = task['filename']
         if task['op'] == 'put':
-            monitor_q.put(('put_dequeue', filename))
+            # monitor_q.put(('put_dequeue', filename))
             jiffy_write = True
             try:
                 start_time = datetime.datetime.now()
@@ -84,14 +84,14 @@ def worker(quit_signal, q, resq, monitor_q, dir_host, dir_porta, dir_portb, bloc
                 print('Create time: ' + str(elapsed.total_seconds()))
                 jiffy_create_ts[filename] = datetime.datetime.now()
                 jiffy_fd[filename] = f
-                start_time = datetime.datetime.now()
+                # start_time = datetime.datetime.now()
                 f.write(buf)
-                elapsed = datetime.datetime.now() - start_time
+                elapsed = datetime.datetime.now() - task['start_ts']
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 jiffy_blocks += 1
                 # monitor_queue.put('put_jiffy')
-                monitor_q.put(('in_jiffy', filename))
+                # monitor_q.put(('in_jiffy', filename))
                 print('Wrote to jiffy ' + str(elapsed.total_seconds()))
             except Exception as e:
                 print('Write to jiffy failed')
@@ -107,26 +107,28 @@ def worker(quit_signal, q, resq, monitor_q, dir_host, dir_porta, dir_portb, bloc
                 # Write to persistent storage
                 # monitor_queue.put('put_persistent')
                 # f = open(backing_path + filename, 'w')
-                start_time = datetime.datetime.now()
-                # f.write(buf)
-                # f.flush()
-                # os.fsync(f.fileno())
-                # f.close()
-                resp = s3.put_object(Bucket=backing_path, Key=uuid.uuid4().hex + '/' + filename, Body=buf)
-                if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
-                    raise Exception('S3 write failed')
-                elapsed = datetime.datetime.now() - start_time
-                lat_sum += elapsed.total_seconds()
-                lat_count += 1
-                persistent_blocks += 1
-                print('Wrote to persistent storage ' + str(elapsed.total_seconds()))
+                wid = map_file_to_worker(filename, para)
+                s3_queues[wid].put(task)
+                # start_time = datetime.datetime.now()
+                # # f.write(buf)
+                # # f.flush()
+                # # os.fsync(f.fileno())
+                # # f.close()
+                # resp = s3.put_object(Bucket=backing_path, Key=uuid.uuid4().hex + '/' + filename, Body=buf)
+                # if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+                #     raise Exception('S3 write failed')
+                # elapsed = datetime.datetime.now() - start_time
+                # lat_sum += elapsed.total_seconds()
+                # lat_count += 1
+                # persistent_blocks += 1
+                # print('Wrote to persistent storage ' + str(elapsed.total_seconds()))
             
             # monitor_q.put('put_complete')
 
         if task['op'] == 'remove':
-            monitor_q.put(('remove_dequeue', filename))
+            # monitor_q.put(('remove_dequeue', filename))
             if in_jiffy[filename]:
-                monitor_q.put(('out_jiffy', filename))
+                # monitor_q.put(('out_jiffy', filename))
                 try:
                     jiffy_fd[filename].clear()
                     client.remove(filename)
@@ -143,6 +145,43 @@ def worker(quit_signal, q, resq, monitor_q, dir_host, dir_porta, dir_portb, bloc
             del in_jiffy[filename]
             # monitor_q.put('remove_complete')
         
+    return
+
+
+def s3_worker(quit_signal, q, resq, block_size, backing_path):
+    # Initialize
+    # Connect the directory server with the corresponding port numbers
+    # monitor_q.cancel_join_thread()
+    s3 = boto3.client('s3')
+    buf = 'a' * block_size
+    # in_jiffy = {}
+    # jiffy_create_ts = {}
+    # jiffy_fd = {}
+    lat_sum = 0
+    lat_count = 0
+    total_block_time = 0
+    jiffy_blocks = 0
+    persistent_blocks = 0
+    print('S3 Worker connected')
+
+    while True:
+        task = q.get()
+        if quit_signal.is_set() or task is None:
+            resq.put({'lat_sum': lat_sum, 'lat_count': lat_count, 'total_block_time': total_block_time, 'jiffy_blocks': jiffy_blocks, 'persistent_blocks': persistent_blocks})
+            print('Worker exiting')
+            break
+        filename = task['filename']
+        if task['op'] == 'put':
+            # resp = s3.put_object(Bucket=backing_path, Key=uuid.uuid4().hex + '/' + filename, Body=buf)
+            # if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+            #     raise Exception('S3 write failed')
+            time.sleep(0.1)
+            elapsed = datetime.datetime.now() - task['start_ts']
+            lat_sum += elapsed.total_seconds()
+            lat_count += 1
+            persistent_blocks += 1
+            print('Wrote to persistent storage ' + str(elapsed.total_seconds()))
+
     return
 
 def get_demands(filename, scale_factor, t):
@@ -176,8 +215,8 @@ if __name__ == "__main__":
     tenant_id = sys.argv[4]
     para = int(sys.argv[5])
     fair_share = 100
-    demands = get_demands(sys.argv[6], fair_share, tenant_id) + [0]
-    #demands = [1000, 0, 0, 0, 0]
+    # demands = get_demands(sys.argv[6], fair_share, tenant_id) + [0]
+    demands = [4, 4, 4, 4, 0]
     micro_epochs = 1 # Micro-epochs per epoch
     dur_micro_epoch = 1 # Micro-epoch duration
     oracle = bool(int(sys.argv[9]))
@@ -187,15 +226,20 @@ if __name__ == "__main__":
         os.makedirs('%s/%s' % (backing_path, tenant_id))
 
     # Create queues
-    queues = []
+    karma_queues = []
     for i in range(para):
-        queues.append(Queue())
+        karma_queues.append(Queue())
+    
+    s3_queues = []
+    for i in range(para):
+        s3_queues.append(Queue())
 
     for i in range(para):
-        queues[i].cancel_join_thread()
+        karma_queues[i].cancel_join_thread()
+        s3_queues[i].cancel_join_thread()
 
     results = Queue()
-    monitor_queue = Queue()
+    # monitor_queue = Queue()
     quit_signal = Event()
 
     # Create monitor
@@ -209,12 +253,22 @@ if __name__ == "__main__":
     # Create workers
     workers = []
     for i in range(para):
-        p = Process(target=worker, args=(quit_signal, queues[i], results, monitor_queue, dir_host, dir_porta, dir_portb, block_size, backing_path))
+        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path))
         workers.append(p)
+
+    # Create S3 workers
+    s3_workers = []
+    for i in range(para):
+        p = Process(target=s3_worker, args=(quit_signal, s3_queues[i], results, block_size, backing_path))
+        s3_workers.append(p)
 
     # Start workers
     for i in range(para):
         workers[i].start()
+
+    for i in range(para):
+        s3_workers[i].start()
+
     print('Started workers')
 
     time_start = time.time()
@@ -250,61 +304,63 @@ if __name__ == "__main__":
         # Advertise demand
         # Every micro-epoch
         # Use previous epoch demand, taking into account carry-over
-        while True:
-            try:
-                stat = monitor_queue.get_nowait()
-                if stat[0] == 'put_dequeue':
-                    outstanding_puts.remove(stat[1])
-                elif stat[0] == 'remove_dequeue':
-                    if stat[1] in outstanding_removes_jiffy:
-                        outstanding_removes_jiffy.remove(stat[1])
-                    else:
-                        outstanding_removes.remove(stat[1])
-                elif stat[0] == 'in_jiffy':
-                    # cur_jiffy_blocks += 1
-                    files_in_jiffy.add(stat[1])
-                    if stat[1] in outstanding_removes:
-                        outstanding_removes.remove(stat[1])
-                        outstanding_removes_jiffy.add(stat[1])
-                elif stat[0] == 'out_jiffy':
-                    # cur_jiffy_blocks -= 1
-                    files_in_jiffy.remove(stat[1])
-            except queue.Empty:
-                break
+        # while True:
+        #     try:
+        #         stat = monitor_queue.get_nowait()
+        #         if stat[0] == 'put_dequeue':
+        #             outstanding_puts.remove(stat[1])
+        #         elif stat[0] == 'remove_dequeue':
+        #             if stat[1] in outstanding_removes_jiffy:
+        #                 outstanding_removes_jiffy.remove(stat[1])
+        #             else:
+        #                 outstanding_removes.remove(stat[1])
+        #         elif stat[0] == 'in_jiffy':
+        #             # cur_jiffy_blocks += 1
+        #             files_in_jiffy.add(stat[1])
+        #             if stat[1] in outstanding_removes:
+        #                 outstanding_removes.remove(stat[1])
+        #                 outstanding_removes_jiffy.add(stat[1])
+        #         elif stat[0] == 'out_jiffy':
+        #             # cur_jiffy_blocks -= 1
+        #             files_in_jiffy.remove(stat[1])
+        #     except queue.Empty:
+        #         break
         
         # Compute estimated demand before generating requests
-        est_demand = compute_demand(tenant_id, files_in_jiffy, outstanding_puts, outstanding_removes_jiffy)
+        # TODO: update this to weighted averaging
+        est_demand = prev_demand
         
         # Generate requests
         # Every epoch
-        to_queue = []
-        num_queued = 0
-        if wakeup_iter % micro_epochs == 0:
-            if cur_demand > prev_demand:
-                # Create files and write
-                for i in range(cur_demand - prev_demand):
-                    filename = '/%s/block%d.txt' % (tenant_id, file_seq)
-                    file_seq += 1
-                    cur_files.append(filename)
-                    wid = map_file_to_worker(filename, para)
-                    to_queue.append((wid, {'op': 'put', 'filename': filename}))
-                    outstanding_puts.add(filename)
+        # to_queue = []
+        # num_queued = 0
+        # if wakeup_iter % micro_epochs == 0:
+        #     if cur_demand > prev_demand:
+        #         # Create files and write
+        #         for i in range(cur_demand - prev_demand):
+        #             filename = '/%s/block%d.txt' % (tenant_id, file_seq)
+        #             file_seq += 1
+        #             cur_files.append(filename)
+        #             wid = map_file_to_worker(filename, para)
+        #             to_queue.append((wid, {'op': 'put', 'filename': filename}))
+        #             outstanding_puts.add(filename)
 
-            elif cur_demand < prev_demand:
-                # Remove files
-                for i in range(prev_demand - cur_demand):
-                    filename = cur_files.pop(0)
-                    wid = map_file_to_worker(filename, para)
-                    to_queue.append((wid, {'op': 'remove', 'filename': filename}))
-                    if filename in files_in_jiffy:
-                        outstanding_removes_jiffy.add(filename)
-                    else:
-                        outstanding_removes.add(filename)
+        #     elif cur_demand < prev_demand:
+        #         # Remove files
+        #         for i in range(prev_demand - cur_demand):
+        #             filename = cur_files.pop(0)
+        #             wid = map_file_to_worker(filename, para)
+        #             to_queue.append((wid, {'op': 'remove', 'filename': filename}))
+        #             if filename in files_in_jiffy:
+        #                 outstanding_removes_jiffy.add(filename)
+        #             else:
+        #                 outstanding_removes.add(filename)
             
-            assert len(cur_files) == cur_demand
+        #     assert len(cur_files) == cur_demand
 
         #  Compute oracle demand after generating requests
-        oracle_demand = compute_demand(tenant_id, files_in_jiffy, outstanding_puts, outstanding_removes_jiffy)
+        # oracle_demand = compute_demand(tenant_id, files_in_jiffy, outstanding_puts, outstanding_removes_jiffy)
+        oracle_demand = cur_demand
 
         # Advertise demand
         if selfish:
@@ -321,29 +377,42 @@ if __name__ == "__main__":
         # Queue requests to workers
         # Every epoch
         if wakeup_iter % micro_epochs == 0:
-            for entry in to_queue:
-                wid = entry[0]
-                task = entry[1]
-                queues[wid].put(task)
-                num_queued += 1
+            # Remove existing files if any
+            for filename in cur_files:
+                wid = map_file_to_worker(filename, para)
+                karma_queues[wid].put({'op': 'remove', 'filename': filename})
+            cur_files = []
+            # Create and write fresh files
+            for i in range(cur_demand):
+                filename = '/%s/block%d.txt' % (tenant_id, file_seq)
+                file_seq += 1
+                cur_files.append(filename)
+                wid = map_file_to_worker(filename, para)
+                karma_queues[wid].put({'op': 'put', 'filename': filename, 'start_ts': datetime.datetime.now()})
         
         time.sleep(dur_micro_epoch)
 
     for i in range(para):
-        queues[i].put(None)
+        karma_queues[i].put(None)
+
+    for i in range(para):
+        s3_queues[i].put(None)
     
     quit_signal.set()
     print('Epochs complete')
 
     # Wait for worker to finish
     for i in range(para):
-        queues[i].close()
+        karma_queues[i].close()
         # queues[i].join_thread()
         workers[i].join()
 
+        s3_queues[i].close()
+        s3_workers[i].join()
+
     # monitor_queue.put(None)
     # Wait for monitor to exit
-    monitor_queue.close()
+    # monitor_queue.close()
     # monitor_queue.join_thread()
     # monitor.join()
 
@@ -353,7 +422,7 @@ if __name__ == "__main__":
     total_block_time = 0
     jiffy_blocks = 0
     persistent_blocks = 0
-    for i in range(para):
+    for i in range(2 * para):
         res = results.get()
         lat_sum += res['lat_sum']
         lat_count += res['lat_count']
