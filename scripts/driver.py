@@ -50,10 +50,14 @@ def map_file_to_worker(filename, num_workers):
 #         time.sleep(1)
 
 
-def worker(quit_signal, q, resq, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path):
+def worker(quit_signal, q, resq, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path, para):
     # Initialize
     # Connect the directory server with the corresponding port numbers
     # monitor_q.cancel_join_thread()
+
+    for i in range(para):
+        s3_queues.cancel_join_thread()
+    
     client = JiffyClient(dir_host, dir_porta, dir_portb)
     # s3 = boto3.client('s3')
     buf = 'a' * block_size
