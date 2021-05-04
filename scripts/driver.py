@@ -215,8 +215,8 @@ if __name__ == "__main__":
     tenant_id = sys.argv[4]
     para = int(sys.argv[5])
     fair_share = 100
-    # demands = get_demands(sys.argv[6], fair_share, tenant_id) + [0]
-    demands = [4, 4, 4, 4, 0]
+    demands = get_demands(sys.argv[6], fair_share, tenant_id) + [0]
+    # demands = [4, 4, 4, 4, 0]
     micro_epochs = 1 # Micro-epochs per epoch
     dur_micro_epoch = 1 # Micro-epoch duration
     oracle = bool(int(sys.argv[9]))
