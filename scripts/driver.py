@@ -50,13 +50,11 @@ def map_file_to_worker(filename, num_workers):
 #         time.sleep(1)
 
 
-def worker(quit_signal, q, resq, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path, para):
+# quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, create_events[i]
+def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, backing_path, create_event):
     # Initialize
     # Connect the directory server with the corresponding port numbers
     # monitor_q.cancel_join_thread()
-
-    for i in range(para):
-        s3_queues[i].cancel_join_thread()
     
     client = JiffyClient(dir_host, dir_porta, dir_portb)
     # s3 = boto3.client('s3')
@@ -77,77 +75,49 @@ def worker(quit_signal, q, resq, s3_queues, dir_host, dir_porta, dir_portb, bloc
             resq.put({'lat_sum': lat_sum, 'lat_count': lat_count, 'total_block_time': total_block_time, 'jiffy_blocks': jiffy_blocks, 'persistent_blocks': persistent_blocks})
             print('Worker exiting')
             break
-        filename = task['filename']
-        if task['op'] == 'put':
-            # monitor_q.put(('put_dequeue', filename))
-            jiffy_write = True
-            try:
-                start_time = datetime.datetime.now()
-                f = client.create_file(filename, 'local:/' + backing_path)
-                elapsed = datetime.datetime.now() - start_time
-                print('Create time: ' + str(elapsed.total_seconds()))
-                jiffy_create_ts[filename] = datetime.datetime.now()
-                jiffy_fd[filename] = f
-                # start_time = datetime.datetime.now()
-                f.write(buf)
-                elapsed = datetime.datetime.now() - task['start_ts']
-                lat_sum += elapsed.total_seconds()
-                lat_count += 1
-                jiffy_blocks += 1
-                # monitor_queue.put('put_jiffy')
-                # monitor_q.put(('in_jiffy', filename))
-                print('Wrote to jiffy ' + str(elapsed.total_seconds()))
-            except Exception as e:
-                print('Write to jiffy failed')
-                jiffy_write = False
-                if filename in jiffy_create_ts:
-                    del jiffy_create_ts[filename]
-                if filename in jiffy_fd:
-                    del jiffy_fd[filename]
+        
+        if task['op'] == 'create':
+            filename = task['filename']
+            start_time = datetime.datetime.now()
+            f = client.create_file(filename, 'local:/' + backing_path)
+            elapsed = datetime.datetime.now() - start_time
+            print('Create time: ' + str(elapsed.total_seconds()))
+            jiffy_fd[filename] = f
 
-            in_jiffy[filename] = jiffy_write
-            
-            if not jiffy_write:
-                # Write to persistent storage
-                # monitor_queue.put('put_persistent')
-                # f = open(backing_path + filename, 'w')
-                wid = map_file_to_worker(filename, para)
-                s3_queues[wid].put(task)
-                # start_time = datetime.datetime.now()
-                # # f.write(buf)
-                # # f.flush()
-                # # os.fsync(f.fileno())
-                # # f.close()
-                # resp = s3.put_object(Bucket=backing_path, Key=uuid.uuid4().hex + '/' + filename, Body=buf)
-                # if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
-                #     raise Exception('S3 write failed')
-                # elapsed = datetime.datetime.now() - start_time
-                # lat_sum += elapsed.total_seconds()
-                # lat_count += 1
-                # persistent_blocks += 1
-                # print('Wrote to persistent storage ' + str(elapsed.total_seconds()))
-            
-            # monitor_q.put('put_complete')
+        if task['op'] == 'create_fin':
+            create_event.set()
 
-        if task['op'] == 'remove':
-            # monitor_q.put(('remove_dequeue', filename))
-            if in_jiffy[filename]:
-                # monitor_q.put(('out_jiffy', filename))
-                try:
-                    jiffy_fd[filename].clear()
-                    client.remove(filename)
-                    duration_used = datetime.datetime.now() - jiffy_create_ts[filename]
-                    total_block_time += duration_used.total_seconds()
-                    print('Removed from jiffy')
-                except:
-                    print('Remove from jiffy failed')
-                del jiffy_create_ts[filename]
-                del jiffy_fd[filename]
-            # else:
-            #     monitor_q.put('remove_persistent')
+        if task['op'] == 'write':
+            filename = task['filename']
+            start_time = datetime.datetime.now()
+            jiffy_fd[filename].seek(0)
+            jiffy_fd[filename].write(buf)
+            elapsed = datetime.datetime.now() - start_time
+            total_elapsed = datetime.datetime.now() - task['start_ts']
+            print('Wrote to jiffy: ' + str(elapsed.total_seconds()))
+            lat_sum += total_elapsed.total_seconds()
+            lat_count += 1
+            jiffy_blocks += 1
+
+        # if task['op'] == 'remove':
+        #     # monitor_q.put(('remove_dequeue', filename))
+        #     if in_jiffy[filename]:
+        #         # monitor_q.put(('out_jiffy', filename))
+        #         try:
+        #             jiffy_fd[filename].clear()
+        #             client.remove(filename)
+        #             duration_used = datetime.datetime.now() - jiffy_create_ts[filename]
+        #             total_block_time += duration_used.total_seconds()
+        #             print('Removed from jiffy')
+        #         except:
+        #             print('Remove from jiffy failed')
+        #         del jiffy_create_ts[filename]
+        #         del jiffy_fd[filename]
+        #     # else:
+        #     #     monitor_q.put('remove_persistent')
             
-            del in_jiffy[filename]
-            # monitor_q.put('remove_complete')
+        #     del in_jiffy[filename]
+        #     # monitor_q.put('remove_complete')
         
     return
 
@@ -175,11 +145,11 @@ def s3_worker(quit_signal, q, resq, block_size, backing_path):
             print('Worker exiting')
             break
         filename = task['filename']
-        if task['op'] == 'put':
-            # resp = s3.put_object(Bucket=backing_path, Key=uuid.uuid4().hex + '/' + filename, Body=buf)
-            # if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
-            #     raise Exception('S3 write failed')
-            time.sleep(0.1)
+        if task['op'] == 'write':
+            resp = s3.put_object(Bucket=backing_path, Key=uuid.uuid4().hex + '/' + filename, Body=buf)
+            if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+                raise Exception('S3 write failed')
+            # time.sleep(0.1)
             elapsed = datetime.datetime.now() - task['start_ts']
             lat_sum += elapsed.total_seconds()
             lat_count += 1
@@ -199,16 +169,22 @@ def get_demands(filename, scale_factor, t):
 
     return ret
 
+def get_allocations(filename, t):
+    with open(filename, 'rb') as handle:
+        allocs = pickle.load(handle)
 
-def compute_demand(tenant_id, files_in_jiffy, outstanding_puts, outstanding_removes_jiffy):
-    # adv_demand = cur_demand + inflight_puts
-    print('outstanding puts: ' + str(len(outstanding_puts)))
-    print('outstanding removes: ' + str(len(outstanding_removes)))
-    print('outstanding jiffy removes: ' + str(len(outstanding_removes_jiffy)))
-    # adv_demand = max(0, prev_demand + inflight_puts - inflight_removes)
-    adv_demand = max(0, len(files_in_jiffy) + len(outstanding_puts) - len(outstanding_removes_jiffy))
-    assert adv_demand >= 0
-    return adv_demand
+    return allocs[t]
+
+
+# def compute_demand(tenant_id, files_in_jiffy, outstanding_puts, outstanding_removes_jiffy):
+#     # adv_demand = cur_demand + inflight_puts
+#     print('outstanding puts: ' + str(len(outstanding_puts)))
+#     print('outstanding removes: ' + str(len(outstanding_removes)))
+#     print('outstanding jiffy removes: ' + str(len(outstanding_removes_jiffy)))
+#     # adv_demand = max(0, prev_demand + inflight_puts - inflight_removes)
+#     adv_demand = max(0, len(files_in_jiffy) + len(outstanding_puts) - len(outstanding_removes_jiffy))
+#     assert adv_demand >= 0
+#     return adv_demand
 
 if __name__ == "__main__":
     dir_host = sys.argv[1]
@@ -219,12 +195,15 @@ if __name__ == "__main__":
     tenant_id = sys.argv[4]
     para = int(sys.argv[5])
     fair_share = 100
-    demands = get_demands(sys.argv[6], fair_share, tenant_id) + [0]
+    demands = get_demands(sys.argv[6], fair_share, tenant_id)
     # demands = [4, 4, 4, 4, 0]
+    dur_epoch = 1
     micro_epochs = 1 # Micro-epochs per epoch
     dur_micro_epoch = 1 # Micro-epoch duration
     oracle = bool(int(sys.argv[9]))
     selfish = bool(int(sys.argv[10]))
+    allocations = get_allocations(sys.argv[11], tenant_id)
+    # allocations = [4, 2, 1, 10, 3]
 
     if not os.path.exists('%s/%s' % (backing_path, tenant_id)):
         os.makedirs('%s/%s' % (backing_path, tenant_id))
@@ -242,6 +221,10 @@ if __name__ == "__main__":
         karma_queues[i].cancel_join_thread()
         s3_queues[i].cancel_join_thread()
 
+    create_events = []
+    for i in range(para):
+        create_events.append(Event())
+
     results = Queue()
     # monitor_queue = Queue()
     quit_signal = Event()
@@ -257,7 +240,7 @@ if __name__ == "__main__":
     # Create workers
     workers = []
     for i in range(para):
-        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, s3_queues, dir_host, dir_porta, dir_portb, block_size, backing_path, para))
+        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, create_events[i]))
         workers.append(p)
 
     # Create S3 workers
@@ -275,126 +258,47 @@ if __name__ == "__main__":
 
     print('Started workers')
 
+    cur_files = []
+
+    # Pre-create files
+    max_files = max(allocations)
+    for i in range(max_files):
+        filename = '/%s/block%d.txt' % (tenant_id, i)
+        cur_files.append(filename)
+        wid = map_file_to_worker(filename, para)
+        karma_queues[wid].put({'op': 'create', 'filename': filename})
+    
+    for i in range(para):
+        karma_queues[i].put({'op': 'create_fin'})
+
+    for i in range(para):
+        create_events[i].wait()
+
+    print('Files pre-created')
+
     time_start = time.time()
 
-    cur_files = []
     cur_demand = 0
     prev_demand = 0
-    file_seq = 0
-    # inflight_puts = 0
-    # inflight_removes = 0
-    outstanding_puts = set()
-    outstanding_removes = set()
-    outstanding_removes_jiffy = set() # Oustanding removes that we know are for blocks in jiffy
-    files_in_jiffy = set()
-    for wakeup_iter in range(len(demands) * micro_epochs):
-        # Wake-up every micro-epoch
-        # Log queue sizes
-        # total_left_over = 0
-        # for i in range(para):
-        #     # print('Queue this epoch: ' + str(num_queued))
-        #     # print('Queue size: ' + str(queues[i].qsize()))
-        #     # print('Left over: ' + str(queues[i].qsize() - num_queued))
-        #     total_left_over += queues[i].qsize()
-        # print('Left over: ' + str(total_left_over))
 
-        e = wakeup_iter // micro_epochs
+    for e in range(len(demands)):
+        cur_demand = demands[e]
+        cur_allocation = allocations[e]
+        print('Epoch ' + str(e) + ', demand=' + str(cur_demand) +', alloc='+ str(cur_allocation))
 
-        # Every epoch
-        if wakeup_iter % micro_epochs == 0:
-            prev_demand = cur_demand
-            cur_demand = demands[e]
+        num_to_karma = min(cur_demand, cur_allocation)
+        for i in range(num_to_karma):
+            filename = cur_files[i]
+            wid = map_file_to_worker(filename, para)
+            karma_queues[wid].put({'op': 'write', 'filename': filename, 'start_ts': datetime.datetime.now()})
 
-        # Advertise demand
-        # Every micro-epoch
-        # Use previous epoch demand, taking into account carry-over
-        # while True:
-        #     try:
-        #         stat = monitor_queue.get_nowait()
-        #         if stat[0] == 'put_dequeue':
-        #             outstanding_puts.remove(stat[1])
-        #         elif stat[0] == 'remove_dequeue':
-        #             if stat[1] in outstanding_removes_jiffy:
-        #                 outstanding_removes_jiffy.remove(stat[1])
-        #             else:
-        #                 outstanding_removes.remove(stat[1])
-        #         elif stat[0] == 'in_jiffy':
-        #             # cur_jiffy_blocks += 1
-        #             files_in_jiffy.add(stat[1])
-        #             if stat[1] in outstanding_removes:
-        #                 outstanding_removes.remove(stat[1])
-        #                 outstanding_removes_jiffy.add(stat[1])
-        #         elif stat[0] == 'out_jiffy':
-        #             # cur_jiffy_blocks -= 1
-        #             files_in_jiffy.remove(stat[1])
-        #     except queue.Empty:
-        #         break
-        
-        # Compute estimated demand before generating requests
-        # TODO: update this to weighted averaging
-        est_demand = prev_demand
-        
-        # Generate requests
-        # Every epoch
-        # to_queue = []
-        # num_queued = 0
-        # if wakeup_iter % micro_epochs == 0:
-        #     if cur_demand > prev_demand:
-        #         # Create files and write
-        #         for i in range(cur_demand - prev_demand):
-        #             filename = '/%s/block%d.txt' % (tenant_id, file_seq)
-        #             file_seq += 1
-        #             cur_files.append(filename)
-        #             wid = map_file_to_worker(filename, para)
-        #             to_queue.append((wid, {'op': 'put', 'filename': filename}))
-        #             outstanding_puts.add(filename)
+        for i in range(num_to_karma, cur_demand):
+            filename = cur_files[i]
+            wid = map_file_to_worker(filename, para)
+            s3_queues[wid].put({'op': 'write', 'filename': filename, 'start_ts': datetime.datetime.now()})
 
-        #     elif cur_demand < prev_demand:
-        #         # Remove files
-        #         for i in range(prev_demand - cur_demand):
-        #             filename = cur_files.pop(0)
-        #             wid = map_file_to_worker(filename, para)
-        #             to_queue.append((wid, {'op': 'remove', 'filename': filename}))
-        #             if filename in files_in_jiffy:
-        #                 outstanding_removes_jiffy.add(filename)
-        #             else:
-        #                 outstanding_removes.add(filename)
-            
-        #     assert len(cur_files) == cur_demand
+        time.sleep(dur_epoch)
 
-        #  Compute oracle demand after generating requests
-        # oracle_demand = compute_demand(tenant_id, files_in_jiffy, outstanding_puts, outstanding_removes_jiffy)
-        oracle_demand = cur_demand
-
-        # Advertise demand
-        if selfish:
-            adv_demand = max(est_demand, fair_share)
-        else:
-            adv_demand = est_demand
-
-        if oracle:
-            adv_demand = oracle_demand
-
-        print('Avertising demand: ' + str(adv_demand) + ' ' + str(oracle_demand))
-        client.fs.add_tags('advertise_demand', {'tenant_id': tenant_id, 'demand': str(adv_demand), 'oracle_demand': str(oracle_demand)})
-
-        # Queue requests to workers
-        # Every epoch
-        if wakeup_iter % micro_epochs == 0:
-            # Remove existing files if any
-            for filename in cur_files:
-                wid = map_file_to_worker(filename, para)
-                karma_queues[wid].put({'op': 'remove', 'filename': filename})
-            cur_files = []
-            # Create and write fresh files
-            for i in range(cur_demand):
-                filename = '/%s/block%d.txt' % (tenant_id, file_seq)
-                file_seq += 1
-                cur_files.append(filename)
-                wid = map_file_to_worker(filename, para)
-                karma_queues[wid].put({'op': 'put', 'filename': filename, 'start_ts': datetime.datetime.now()})
-        
-        time.sleep(dur_micro_epoch)
 
     for i in range(para):
         karma_queues[i].put(None)
