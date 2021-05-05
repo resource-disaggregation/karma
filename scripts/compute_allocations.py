@@ -65,6 +65,13 @@ with open(out_file, 'wb') as handle:
 
 print('Dumped allocations')
 
+if alloc_type == 'karma':
+    out_file = prefix + '.credits'
+    with open(out_file, 'wb') as handle:
+        pickle.dump(alloc.credits_history, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    print('Dumped credit log')
+
 
 
 

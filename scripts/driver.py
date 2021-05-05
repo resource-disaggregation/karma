@@ -312,17 +312,24 @@ if __name__ == "__main__":
     for i in range(para):
         s3_queues[i].put(None)
     
-    quit_signal.set()
+    # quit_signal.set()
     print('Epochs complete')
+
+    # Wait for worker to finish
+    for i in range(para):
+        workers[i].join()
+    
+    for i in range(para):
+        s3_workers[i].join()
 
     # Wait for worker to finish
     for i in range(para):
         karma_queues[i].close()
         # queues[i].join_thread()
-        workers[i].join()
+        # workers[i].join()
 
         s3_queues[i].close()
-        s3_workers[i].join()
+        # s3_workers[i].join()
 
     # monitor_queue.put(None)
     # Wait for monitor to exit
