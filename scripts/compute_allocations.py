@@ -23,7 +23,7 @@ fair_share = int(sys.argv[4])
 init_credits = int(sys.argv[5])
 public_blocks = int(sys.argv[6])
 
-prefix = '/home/midhul/karma-eval/' + config
+prefix = '/home/ubuntu/karma-eval/' + config
 
 raw_demands = get_demands(trace_file, fair_share)
 
