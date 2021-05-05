@@ -9,12 +9,13 @@ def reset_map(m):
 		m[k] = 0
 
 class Allocator:
-	def __init__(self, demands, total_blocks, init_credits, public_blocks = 0, redistribution_freq = 1):
+	def __init__(self, demands, total_blocks, init_credits, public_blocks = 0, redistribution_freq = 1, inflation = 0):
 		self.demands = copy.deepcopy(demands)
 		self.total_blocks = total_blocks
 		self.init_credits = init_credits
 		self.public_blocks = public_blocks
 		self.redistribution_freq = redistribution_freq
+		self.inflation = inflation
 
 		self.num_epochs = len(self.demands[list(self.demands.keys())[0]])
 		self.num_tenants = len(self.demands)
@@ -65,8 +66,14 @@ class Allocator:
 						self.credit_map[t] += self.credit_map['$public$'] // self.num_tenants
 
 					self.credit_map['$public$'] = self.credit_map['$public$'] % self.num_tenants
+			
+			# Free credits
+			for t in self.credit_map:
+				if t == '$public$':
+					continue
+				self.credit_map[t] += self.inflation
 
-			assert sum(self.credit_map.values()) == self.total_credits
+			# assert sum(self.credit_map.values()) == self.total_credits
 			# Log credits
 			for t in self.credit_map:
 				assert self.credit_map[t] >= 0

@@ -116,4 +116,34 @@ class TestAllocator:
         
         credit_checks(demands, allocations, alloc.credits_history, 10)
 
+    def test_inflation(self):
+        num_tenants = 3
+        num_epochs = 5
+        demands = {'A': [6,12,0,6,6], 'B': [6,0,12,6,6], 'C': [0,0,0,18,12]}
+        total_blocks = 18
+        public_blocks = 9
+        inflation = 3
+
+        alloc = Allocator(demands, total_blocks=total_blocks, init_credits=6, public_blocks=public_blocks, inflation=3)
+        allocations = alloc.compute()
+        basic_checks(demands, allocations)
+        for e in range(num_epochs):
+            total_allocation = 0
+            total_demand = 0
+            for t in demands:
+                # Isolation
+                assert allocations[t][e] >= min(demands[t][e], 3)
+                total_allocation += allocations[t][e]
+                total_demand += allocations[t][e]
+        
+        assert sum(allocations['A']) == 24
+        assert sum(allocations['B']) == 24
+        assert sum(allocations['C']) == 24
+
+        assert alloc.credit_map['A'] == 18
+        assert alloc.credit_map['B'] == 18
+        assert alloc.credit_map['C'] == 27
+
+
+
 
