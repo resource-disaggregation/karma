@@ -293,7 +293,7 @@ if __name__ == "__main__":
             karma_queues[wid].put({'op': 'write', 'filename': filename, 'start_ts': datetime.datetime.now()})
 
         for i in range(num_to_karma, cur_demand):
-            filename = cur_files[i]
+            filename = 'blablablabla'
             wid = map_file_to_worker(filename, para)
             s3_queues[wid].put({'op': 'write', 'filename': filename, 'start_ts': datetime.datetime.now()})
 
