@@ -205,6 +205,8 @@ if __name__ == "__main__":
     allocations = get_allocations(sys.argv[11], tenant_id)
     # allocations = [4, 2, 1, 10, 3]
 
+    file_limit = 100
+
     if not os.path.exists('%s/%s' % (backing_path, tenant_id)):
         os.makedirs('%s/%s' % (backing_path, tenant_id))
 
@@ -262,6 +264,7 @@ if __name__ == "__main__":
 
     # Pre-create files
     max_files = max(allocations)
+    max_files = min(file_limit, max_files)
     for i in range(max_files):
         filename = '/%s/block%d.txt' % (tenant_id, i)
         cur_files.append(filename)
@@ -288,7 +291,7 @@ if __name__ == "__main__":
 
         num_to_karma = min(cur_demand, cur_allocation)
         for i in range(num_to_karma):
-            filename = cur_files[i]
+            filename = cur_files[i%len(cur_files)]
             wid = map_file_to_worker(filename, para)
             karma_queues[wid].put({'op': 'write', 'filename': filename, 'start_ts': datetime.datetime.now()})
 
