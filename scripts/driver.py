@@ -146,16 +146,18 @@ def s3_worker(quit_signal, q, resq, block_size, backing_path):
             break
         filename = task['filename']
         if task['op'] == 'write':
+            start_time = datetime.datetime.now()
             resp = s3.put_object(Bucket=backing_path, Key=uuid.uuid4().hex + '/' + filename, Body=buf)
             if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
                 raise Exception('S3 write failed')
+            elapsed = datetime.datetime.now() - start_time
+            total_elapsed = datetime.datetime.now() - task['start_ts']
+            print('Wrote to persistent storage ' + str(elapsed.total_seconds()))
             # time.sleep(0.1)
-            elapsed = datetime.datetime.now() - task['start_ts']
-            lat_sum += elapsed.total_seconds()
+            lat_sum += total_elapsed.total_seconds()
             lat_count += 1
             persistent_blocks += 1
-            print('Wrote to persistent storage ' + str(elapsed.total_seconds()))
-
+            
     return
 
 def get_demands(filename, scale_factor, t):
