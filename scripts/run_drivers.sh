@@ -39,7 +39,7 @@ pids=()
 echo "Starting altruistic tenants"
 for tenant in "${alt_tenants[@]}"
 do
-    python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 0 > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+    python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 0 "/home/ubuntu/karma-eval/$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
     pids+=($!);
     echo "Launched tenant$tenant";
 done
@@ -49,7 +49,7 @@ echo "Starting selfish tenants"
 
 for tenant in "${selfish_tenants[@]}"
 do
-    python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 1 > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+    python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 1 "/home/ubuntu/karma-eval/$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
     pids+=($!);
     echo "Launched tenant$tenant";
 done
