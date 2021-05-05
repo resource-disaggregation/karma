@@ -287,6 +287,9 @@ if __name__ == "__main__":
     cur_demand = 0
     prev_demand = 0
 
+    overall_jiffy_blocks = 0
+    overall_s3_blocks = 0
+
     for e in range(len(demands)):
         cur_demand = demands[e]
         cur_allocation = allocations[e]
@@ -297,11 +300,13 @@ if __name__ == "__main__":
             filename = cur_files[i%len(cur_files)]
             wid = map_file_to_worker(filename, para)
             karma_queues[wid].put({'op': 'write', 'filename': filename, 'start_ts': datetime.datetime.now()})
+            overall_jiffy_blocks += 1
 
         for i in range(num_to_karma, cur_demand):
             filename = 'blablablabla'
             wid = map_file_to_worker(filename, para)
             s3_queues[wid].put({'op': 'write', 'filename': filename, 'start_ts': datetime.datetime.now()})
+            overall_s3_blocks += 1
 
         time.sleep(dur_epoch)
 
@@ -312,24 +317,17 @@ if __name__ == "__main__":
     for i in range(para):
         s3_queues[i].put(None)
     
-    # quit_signal.set()
+    quit_signal.set()
     print('Epochs complete')
-
-    # Wait for worker to finish
-    for i in range(para):
-        workers[i].join()
-    
-    for i in range(para):
-        s3_workers[i].join()
 
     # Wait for worker to finish
     for i in range(para):
         karma_queues[i].close()
         # queues[i].join_thread()
-        # workers[i].join()
+        workers[i].join()
 
         s3_queues[i].close()
-        # s3_workers[i].join()
+        s3_workers[i].join()
 
     # monitor_queue.put(None)
     # Wait for monitor to exit
@@ -357,8 +355,10 @@ if __name__ == "__main__":
     print(prefix_str + 'Latency sum: ' + str(lat_sum))
     print(prefix_str + 'Latency count: ' + str(lat_count))
     print(prefix_str + 'Total block time: ' + str(total_block_time))
-    print(prefix_str + 'Jiffy blocks: ' + str(jiffy_blocks))
-    print(prefix_str + 'Persistent blocks: ' + str(persistent_blocks))
+    print(prefix_str + 'Written Jiffy blocks: ' + str(jiffy_blocks))
+    print(prefix_str + 'Written Persistent blocks: ' + str(persistent_blocks))
+    print(prefix_str + 'Jiffy blocks: ' + str(overall_jiffy_blocks))
+    print(prefix_str + 'Persistent blocks: ' + str(overall_s3_blocks))
 
     time_end = time.time()
     print(prefix_str + "Execution time: " + str(time_end -  time_start))
