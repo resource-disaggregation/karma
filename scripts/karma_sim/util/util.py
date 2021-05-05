@@ -38,6 +38,9 @@ def get_demands(filename, scale_factor):
 
 	return ret
 
+def load_obj(filename):
+	with open(filename, 'rb') as handle:
+		return pickle.load(handle)
 
 
 # # Compute utilization
