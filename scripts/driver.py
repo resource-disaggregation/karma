@@ -263,8 +263,9 @@ if __name__ == "__main__":
     cur_files = []
 
     # Pre-create files
-    max_files = max(allocations)
-    max_files = min(file_limit, max_files)
+    # max_files = max(allocations)
+    # max_files = min(file_limit, max_files)
+    max_files = file_limit
     for i in range(max_files):
         filename = '/%s/block%d.txt' % (tenant_id, i)
         cur_files.append(filename)
