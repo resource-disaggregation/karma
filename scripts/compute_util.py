@@ -29,7 +29,7 @@ def compute_jiffy_blocks(allocations, raw_demands):
         for e in range(num_epochs):
             used.append(min(allocations[t][e], raw_demands[t][e]))
         used_capacity += sum(used)
-    return used
+    return used_capacity
 
 def compute_s3_blocks(allocations, raw_demands):
     total_blocks = 0
