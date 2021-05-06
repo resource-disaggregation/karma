@@ -34,6 +34,8 @@ def compute_inst_fairness(allocations, raw_demands):
         inst_fairness = min(utys) / max(utys)
         ret.append(inst_fairness)
 
+    return ret
+
 def compute_jiffy_blocks(allocations, raw_demands):
     num_epochs = len(allocations[list(allocations.keys())[0]])
     used_capacity = 0
