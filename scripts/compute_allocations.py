@@ -1,6 +1,6 @@
 # python3 compute_allocations.py test /home/midhul/snowflake_demands_nogaps10.pickle static 100 90000 0 100 0
 
-import os, pickle, sys
+import os, pickle, sys, random
 
 from karma_sim.util import *
 from karma_sim.allocator import Allocator,MaxMinAllocator,StaticAllocator
@@ -15,6 +15,13 @@ def smoothed_avg(a, alpha, avg):
         ret.append(math.ceil(avg))
     return ret
 
+def add_noise(a, error):
+    ret = []
+    for x in a:
+        eps = random.uniform(-1*error, error)
+        ret.append(math.ceil(x + eps*x))
+    return ret
+
 
 config = sys.argv[1]
 trace_file = sys.argv[2]
@@ -25,6 +32,12 @@ public_blocks = int(sys.argv[6])
 guarantee = int(sys.argv[7])
 oracle = bool(sys.argv[8])
 
+estimator = 'savg'
+error = 0.0
+if(len(sys.argv) >= 10):
+    estimator = sys.argv[9]
+    error = float(sys.argv[10])
+
 prefix = '/home/ubuntu/karma-eval/' + config
 
 raw_demands = get_demands(trace_file, average)
@@ -34,8 +47,14 @@ if oracle:
     for t in raw_demands:
         demands[t] = raw_demands[t][:]
 else:
-    for t in raw_demands:
-        demands[t] = smoothed_avg(raw_demands[t], 0.5, average)
+    if estimator == 'savg':
+        for t in raw_demands:
+            demands[t] = smoothed_avg(raw_demands[t], 0.5, average)
+    elif estimator == 'noise':
+        for t in raw_demands:
+            demands[t] = add_noise(raw_demands[t], error)
+    else:
+        raise Exception('Unsupported estimator')
 
     # Simulate reclaim
     for t in demands:
