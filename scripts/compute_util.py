@@ -1,4 +1,4 @@
-import os, pickle, sys
+import os, pickle, sys, random
 
 from karma_sim.util import *
 from karma_sim.allocator import Allocator,MaxMinAllocator,StaticAllocator
@@ -57,8 +57,17 @@ print(compute_utilization(allocs, raw_demands, total_blocks))
 print('Fairness (min/max)')
 print(compute_fairness(allocs))
 
+jiffy_blocks = compute_jiffy_blocks(allocs, raw_demands)
 print('Jiffy blocks')
-print(compute_jiffy_blocks(allocs, raw_demands))
+print(jiffy_blocks)
 
+s3_blocks = compute_s3_blocks(allocs, raw_demands)
 print('S3 blocks')
-print(compute_s3_blocks(allocs, raw_demands))
+print(s3_blocks)
+
+est_s3_lat = random.uniform(0.043, 0.050)
+est_jiffy_lat = random.uniform(0.00085, 0.00095)
+
+est_lat = (jiffy_blocks*est_jiffy_lat + s3_blocks*est_s3_lat)/(jiffy_blocks + s3_blocks)
+print('Est avg latency')
+print(est_lat)
