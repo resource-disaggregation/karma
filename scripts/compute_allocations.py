@@ -30,7 +30,7 @@ average = int(sys.argv[4])
 init_credits = int(sys.argv[5])
 public_blocks = int(sys.argv[6])
 guarantee = int(sys.argv[7])
-oracle = bool(sys.argv[8])
+oracle = bool(int(sys.argv[8]))
 
 estimator = 'savg'
 error = 0.0
