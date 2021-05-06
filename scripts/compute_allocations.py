@@ -46,6 +46,10 @@ error = float(sys.argv[10])
 alt_file = sys.argv[11]
 selfish_file = sys.argv[12]
 
+alloc_gran = 1
+if len(sys.argv) >= 14:
+    alloc_gran = int(sys.argv[13])
+
 prefix = '/home/ubuntu/karma-eval/' + config
 
 raw_demands = get_demands(trace_file, average)

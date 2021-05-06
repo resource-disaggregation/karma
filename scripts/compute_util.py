@@ -21,6 +21,17 @@ def compute_fairness(allocations):
 
     return float(min(sum_allocs))/float(max(sum_allocs))
 
+def compute_inst_fairness(allocations, raw_demands):
+    num_epochs = len(allocations[list(allocations.keys())[0]])
+    ret = []
+    for e in range(num_epochs):
+        utys = []
+        for t in allocations:
+            uty = float(min(raw_demands[t][e], allocations[t][e]))/float(raw_demands[t][e]) if raw_demands[t][e] > 0 else 1.0
+            utys.append(uty)
+        inst_fairness = min(utys) / max(utys)
+        ret.append(inst_fairness)
+
 def compute_jiffy_blocks(allocations, raw_demands):
     num_epochs = len(allocations[list(allocations.keys())[0]])
     used_capacity = 0
@@ -71,3 +82,8 @@ est_jiffy_lat = random.uniform(0.00085, 0.00095)
 est_lat = (jiffy_blocks*est_jiffy_lat + s3_blocks*est_s3_lat)/(jiffy_blocks + s3_blocks)
 print('Est avg latency')
 print(est_lat)
+
+print('Inst fairness')
+inst_fairness = compute_inst_fairness(allocs, raw_demands)
+for i in range(len(inst_fairness)):
+    print(str(i) + '\t' + str(inst_fairness[i]))
