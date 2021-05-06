@@ -6,4 +6,4 @@ with open(filename, 'rb') as handle:
     credits_history = pickle.load(handle)
 
 for t in credits_history:
-    print(t + '\t' + credits_history[t][900])
+    print(t + '\t' + credits_history[t][-1])
