@@ -22,6 +22,16 @@ def add_noise(a, error):
         ret.append(math.ceil(x + eps*x))
     return ret
 
+def extract_list(filename):
+    ret = []
+    f = open(filename, 'r')
+    for line in f:
+        if line.strip() != '':
+            ret.append(line.strip())
+    f.close()
+
+    return ret
+
 
 config = sys.argv[1]
 trace_file = sys.argv[2]
@@ -31,16 +41,18 @@ init_credits = int(sys.argv[5])
 public_blocks = int(sys.argv[6])
 guarantee = int(sys.argv[7])
 oracle = bool(int(sys.argv[8]))
-
-estimator = 'savg'
-error = 0.0
-if(len(sys.argv) >= 10):
-    estimator = sys.argv[9]
-    error = float(sys.argv[10])
+estimator = sys.argv[9]
+error = float(sys.argv[10])
+alt_file = sys.argv[11]
+selfish_file = sys.argv[12]
 
 prefix = '/home/ubuntu/karma-eval/' + config
 
 raw_demands = get_demands(trace_file, average)
+
+alt_tenants = extract_list(alt_file)
+selfish_tenants = extract_list(selfish_file)
+
 
 demands = {}
 if oracle:
@@ -62,6 +74,12 @@ else:
         for i in range(len(demands[t])):
             if demands[t][i] < guarantee and demands[t][i] < raw_demands[t][i]:
                 demands[t][i] = min(raw_demands[t][i], guarantee)
+
+# Selfish tenants
+for t in selfish_tenants:
+    for i in range(len(demands[t])):
+        demands[t][i] = max(average, demands[t][i])
+
 
 num_tenants = len(demands)
 capacity = num_tenants*average
