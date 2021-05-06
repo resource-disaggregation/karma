@@ -51,6 +51,7 @@ else:
         for t in raw_demands:
             demands[t] = smoothed_avg(raw_demands[t], 0.5, average)
     elif estimator == 'noise':
+        print('Injecting noise')
         for t in raw_demands:
             demands[t] = add_noise(raw_demands[t], error)
     else:
