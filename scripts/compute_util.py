@@ -3,6 +3,8 @@ import os, pickle, sys, random
 from karma_sim.util import *
 from karma_sim.allocator import Allocator,MaxMinAllocator,StaticAllocator
 
+random.seed()
+
 def compute_utilization(allocations, raw_demands, total_blocks):
     num_epochs = len(allocations[list(allocations.keys())[0]])
     used_capacity = 0
