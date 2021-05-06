@@ -11,4 +11,4 @@ for t in credits_history:
 for t in credits_history:
     for x in credits_history[t]:
         if x == 0:
-            print('Tenant hit 0 creds')
+            print('Tenant hit 0 creds ' + str(t) + ', ' + str(x))
