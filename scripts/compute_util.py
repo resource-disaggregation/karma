@@ -16,10 +16,14 @@ def compute_utilization(allocations, raw_demands, total_blocks):
     util = float(used_capacity)/float(total_blocks * num_epochs)
     return util
 
-def compute_fairness(allocations):
+def compute_fairness(allocations, raw_demands):
+    num_epochs = len(allocations[list(allocations.keys())[0]])
     sum_allocs = []
     for t in allocations:
-        sum_allocs.append(sum(allocations[t]))
+        used = []
+        for e in range(num_epochs):
+            used.append(min(allocations[t][e], raw_demands[t][e]))
+        sum_allocs.append(sum(used))
 
     return float(min(sum_allocs))/float(max(sum_allocs))
 
@@ -70,7 +74,7 @@ print('Utilization')
 print(compute_utilization(allocs, raw_demands, total_blocks))
 
 print('Fairness (min/max)')
-print(compute_fairness(allocs))
+print(compute_fairness(allocs, raw_demands))
 
 jiffy_blocks = compute_jiffy_blocks(allocs, raw_demands)
 print('Jiffy blocks')
