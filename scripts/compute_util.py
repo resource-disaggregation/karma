@@ -87,7 +87,8 @@ est_lat = (jiffy_blocks*est_jiffy_lat + s3_blocks*est_s3_lat)/(jiffy_blocks + s3
 print('Est avg latency')
 print(est_lat)
 
-print('Inst fairness')
+print('Avg Inst fairness')
 inst_fairness = compute_inst_fairness(allocs, raw_demands)
-for i in range(len(inst_fairness)):
-    print(str(i) + '\t' + str(inst_fairness[i]))
+# for i in range(len(inst_fairness)):
+#     print(str(i) + '\t' + str(inst_fairness[i]))
+print(sum(inst_fairness) / len(inst_fairness))
