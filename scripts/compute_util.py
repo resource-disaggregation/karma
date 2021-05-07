@@ -89,6 +89,7 @@ print(est_lat)
 
 print('Avg Inst fairness')
 inst_fairness = compute_inst_fairness(allocs, raw_demands)
-# for i in range(len(inst_fairness)):
-#     print(str(i) + '\t' + str(inst_fairness[i]))
-print(sum(inst_fairness) / len(inst_fairness))
+inst_fairness.sort(reverse=True)
+for i in range(len(inst_fairness)):
+    print(str(i) + '\t' + str(inst_fairness[i]))
+# print(sum(inst_fairness) / len(inst_fairness))
