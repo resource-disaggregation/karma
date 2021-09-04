@@ -9,12 +9,13 @@ def reset_map(m):
 		m[k] = 0
 
 class Allocator:
-	def __init__(self, demands, total_blocks, init_credits, public_blocks = 0, redistribution_freq = 1, inflation = 0):
+	def __init__(self, demands, total_blocks, init_credits, public_blocks = 0, redistribution_freq = 1, redistribution_thresh = 0, inflation = 0):
 		self.demands = copy.deepcopy(demands)
 		self.total_blocks = total_blocks
 		self.init_credits = init_credits
 		self.public_blocks = public_blocks
 		self.redistribution_freq = redistribution_freq
+		self.redistribution_thresh = redistribution_thresh
 		self.inflation = inflation
 
 		self.num_epochs = len(self.demands[list(self.demands.keys())[0]])
@@ -33,6 +34,7 @@ class Allocator:
 		self.rate_map = {}
 		self.credit_map = {}
 		self.credits_history = {}
+		self.redist_credits = 0
 		for t in self.demands:
 			assert len(self.demands[t]) == self.num_epochs
 			self.fair_share[t] = self.public_blocks if t == '$public$' else self.normal_share
@@ -57,15 +59,21 @@ class Allocator:
 				self.credit_map[t] += self.rate_map[t]
 				assert self.credit_map[t] >= 0
 			reset_map(self.rate_map)
-			# Re-distribute public credits
+			# Check for re-distributable credits
+			if self.credit_map['$public$'] > self.redistribution_thresh:
+				self.redist_credits += self.credit_map['$public$'] - self.redistribution_thresh
+				self.credit_map['$public$'] = self.redistribution_thresh
+			# Drain remaining provider credits
+			self.credit_map['$public$'] = 0
+			#Re-distribute credits
 			if e % self.redistribution_freq == 0:
-				if self.credit_map['$public$'] > self.num_tenants:
+				if self.redist_credits > self.num_tenants:
 					for t in self.credit_map:
 						if t == '$public$':
 							continue
-						self.credit_map[t] += self.credit_map['$public$'] // self.num_tenants
+						self.credit_map[t] += self.redist_credits // self.num_tenants
 
-					self.credit_map['$public$'] = self.credit_map['$public$'] % self.num_tenants
+					self.redist_credits = self.redist_credits % self.num_tenants
 			
 			# Free credits
 			for t in self.credit_map:

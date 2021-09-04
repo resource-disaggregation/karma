@@ -95,7 +95,7 @@ if alloc_type == 'static':
 elif alloc_type == 'maxmin':
     alloc = MaxMinAllocator(raw_demands, total_blocks=capacity)
 elif alloc_type == 'karma':
-    alloc = Allocator(demands, total_blocks=capacity+public_blocks, init_credits=init_credits, public_blocks=taken_away + public_blocks, inflation=(average-guarantee))
+    alloc = Allocator(demands, total_blocks=capacity+public_blocks, init_credits=init_credits, public_blocks=taken_away + public_blocks, redistribution_thresh=taken_away, inflation=(average-guarantee))
 else:
     raise Exception('unsupported allocator')
 
