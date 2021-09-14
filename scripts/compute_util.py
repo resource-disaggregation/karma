@@ -135,7 +135,8 @@ print('Est avg latency')
 print(est_lat)
 
 print('perf cdf')
-cdf = compute_perf_cdf(allocs, raw_demands, est_s3_lat, est_jiffy_lat)
+# cdf = compute_perf_cdf(allocs, raw_demands, est_s3_lat, est_jiffy_lat)
+cdf = compute_tail_cdf(allocs, raw_demands)
 for x in cdf:
     print(x)
 # print('Avg Inst fairness')
