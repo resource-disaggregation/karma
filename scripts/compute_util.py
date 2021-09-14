@@ -27,6 +27,26 @@ def compute_fairness(allocations, raw_demands):
 
     return float(min(sum_allocs))/float(max(sum_allocs))
 
+def compute_perf_cdf(allocations, raw_demands, s3_lat, jiffy_lat):
+    num_epochs = len(allocations[list(allocations.keys())[0]])
+    lats = []
+    for t in allocations:
+        used = []
+        demands = []
+        for e in range(num_epochs):
+            used.append(min(allocations[t][e], raw_demands[t][e]))
+            demands.append(raw_demands[t][e])
+       
+        sum_demands.append(sum(demands))
+
+        jiffy_blocks = sum(used)
+        s3_blocks = sum(demands) - sum(used)
+        avg_lat = (jiffy_bloc*jiffy_lat + s3_blocks*s3_lat)/(jiffy_blocks + s3_blocks)
+        lats.append(avg_lat)
+
+    return sorted(lats)[::-1]
+
+
 def compute_inst_fairness(allocations, raw_demands):
     num_epochs = len(allocations[list(allocations.keys())[0]])
     ret = []
@@ -91,9 +111,13 @@ est_lat = (jiffy_blocks*est_jiffy_lat + s3_blocks*est_s3_lat)/(jiffy_blocks + s3
 print('Est avg latency')
 print(est_lat)
 
-print('Avg Inst fairness')
-inst_fairness = compute_inst_fairness(allocs, raw_demands)
-inst_fairness.sort(reverse=True)
-for i in range(len(inst_fairness)):
-    print(str(i) + '\t' + str(inst_fairness[i]))
+print('perf cdf')
+cdf = compute_perf_cdf(allocs, raw_demands, est_s3_lat, est_jiffy_lat)
+for x in cdf:
+    print(x)
+# print('Avg Inst fairness')
+# inst_fairness = compute_inst_fairness(allocs, raw_demands)
+# inst_fairness.sort(reverse=True)
+# for i in range(len(inst_fairness)):
+#     print(str(i) + '\t' + str(inst_fairness[i]))
 # print(sum(inst_fairness) / len(inst_fairness))
