@@ -104,7 +104,7 @@ s3_blocks = compute_s3_blocks(allocs, raw_demands)
 print('S3 blocks')
 print(s3_blocks)
 
-est_s3_lat = random.uniform(0.043, 0.050)
+est_s3_lat = random.uniform(0.053, 0.057)
 est_jiffy_lat = random.uniform(0.00085, 0.00095)
 
 est_lat = (jiffy_blocks*est_jiffy_lat + s3_blocks*est_s3_lat)/(jiffy_blocks + s3_blocks)
