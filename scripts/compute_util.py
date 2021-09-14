@@ -36,8 +36,6 @@ def compute_perf_cdf(allocations, raw_demands, s3_lat, jiffy_lat):
         for e in range(num_epochs):
             used.append(min(allocations[t][e], raw_demands[t][e]))
             demands.append(raw_demands[t][e])
-       
-        sum_demands.append(sum(demands))
 
         jiffy_blocks = sum(used)
         s3_blocks = sum(demands) - sum(used)
