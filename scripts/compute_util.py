@@ -63,8 +63,8 @@ def compute_tail_cdf(allocations, raw_demands):
         for i in range(s3_blocks):
             trace.append(random.uniform(0.049, 0.061))
 
-        99p_idx = int(0.99 * len(trace))
-        lats.append(sorted(trace)[99p_idx])
+        p99_idx = int(0.99 * len(trace))
+        lats.append(sorted(trace)[p99_idx])
 
     return sorted(lats)[::-1]
 
