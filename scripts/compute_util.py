@@ -39,7 +39,7 @@ def compute_perf_cdf(allocations, raw_demands, s3_lat, jiffy_lat):
 
         jiffy_blocks = sum(used)
         s3_blocks = sum(demands) - sum(used)
-        avg_lat = (jiffy_bloc*jiffy_lat + s3_blocks*s3_lat)/(jiffy_blocks + s3_blocks)
+        avg_lat = (jiffy_blocks*jiffy_lat + s3_blocks*s3_lat)/(jiffy_blocks + s3_blocks)
         lats.append(avg_lat)
 
     return sorted(lats)[::-1]
