@@ -44,6 +44,31 @@ def compute_perf_cdf(allocations, raw_demands, s3_lat, jiffy_lat):
 
     return sorted(lats)[::-1]
 
+def compute_tail_cdf(allocations, raw_demands):
+    num_epochs = len(allocations[list(allocations.keys())[0]])
+    lats = []
+    for t in allocations:
+        used = []
+        demands = []
+        for e in range(num_epochs):
+            used.append(min(allocations[t][e], raw_demands[t][e]))
+            demands.append(raw_demands[t][e])
+
+        jiffy_blocks = sum(used)
+        s3_blocks = sum(demands) - sum(used)
+        
+        trace = []
+        for i in range(jiffy_blocks):
+            trace.append(random.uniform(0.00085, 0.00095))
+        for i in range(s3_blocks):
+            trace.append(random.uniform(0.049, 0.061))
+
+        99p_idx = int(0.99 * len(trace))
+        lats.append(sorted(trace)[99p_idx])
+
+    return sorted(lats)[::-1]
+
+
 
 def compute_inst_fairness(allocations, raw_demands):
     num_epochs = len(allocations[list(allocations.keys())[0]])
