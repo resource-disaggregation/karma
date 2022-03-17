@@ -1,7 +1,7 @@
 cfg=$1
 
 for para in 1 2 4 8 16; do
-    prefix="~/karma-eval/$cfg-latthru-para$para";
+    prefix=~/karma-eval/"$cfg-latthru-para$para";
     rm -f $prefix.dump.txt
     cat $prefix.tenant* | grep -i -e '\[selfish\]' -e '\[alt\]' > $prefix.dump.txt
     lat_sum=$(cat $prefix.dump.txt | grep -i 'latency sum' | awk '{sum += $5;} END {print sum}')
