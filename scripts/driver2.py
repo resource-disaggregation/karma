@@ -85,7 +85,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 jiffy_blocks += 1
-                print('Read key %d from Jiffy' % (access_key))
+                # print('Read key %d from Jiffy' % (access_key))
             else:
                 # Read from S3
                 start_time = datetime.datetime.now()
@@ -94,7 +94,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 persistent_blocks += 1
-                print('Read key %d from S3' % (access_key))
+                # print('Read key %d from S3' % (access_key))
         else:
             if(access_key < cur_alloc):
                 start_time = datetime.datetime.now()
@@ -103,7 +103,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 jiffy_blocks += 1
-                print('Write key %d to Jiffy' % (access_key))
+                # print('Write key %d to Jiffy' % (access_key))
             else:
                 # Write to S3
                 start_time = datetime.datetime.now()
@@ -112,7 +112,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 persistent_blocks += 1
-                print('Write key %d to S3' % (access_key))
+                # print('Write key %d to S3' % (access_key))
         total_ops += 1
         
     return
@@ -183,14 +183,14 @@ if __name__ == "__main__":
     tenant_id = sys.argv[4]
     para = int(sys.argv[5])
     fair_share = 100
-    #demands = get_demands(sys.argv[6], fair_share, tenant_id)
-    demands = [1, 1, 1, 1, 1]
+    demands = get_demands(sys.argv[6], fair_share, tenant_id)
+    # demands = [1, 1, 1, 1, 1]
     dur_epoch = 1
     oracle = bool(int(sys.argv[9]))
     selfish = bool(int(sys.argv[10]))
-    #allocations = get_allocations(sys.argv[11], tenant_id)
+    allocations = get_allocations(sys.argv[11], tenant_id)
     capacity = int(sys.argv[12])
-    allocations = [1, 1, 1, 1, 1]
+    # allocations = [1, 1, 1, 1, 1]
 
     # Create queues
     karma_queues = []
