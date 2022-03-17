@@ -12,11 +12,11 @@ allocs_out = sys.argv[5]
 demands = {}
 allocs = {}
 
-for t in range(num_tenants):
+for t in [str(x) for x in range(num_tenants)]:
     demands[t] = []
     allocs[t] = []
     for e in range(duration):
-        demands[t].append(fair_share)
+        demands[t].append(1)
         allocs[t].append(fair_share)
 
 
