@@ -36,7 +36,7 @@ file_partition::file_partition(block_memory_manager *manager,
   // }
   ser_ = std::make_shared<binary_serde>(binary_allocator_);
   auto_scale_ = conf.get_as<bool>("file.auto_scale", true);
-  remote_ = persistent::persistent_store::instance("s3://foo", ser_);
+  // remote_ = persistent::persistent_store::instance("s3://foo", ser_);
 }
 
 void file_partition::write(response &_return, const arg_list &args) {
@@ -192,7 +192,7 @@ bool file_partition::dump(const std::string &path) {
   if (dirty_) {
     auto remote = persistent::persistent_store::instance(path, ser_);
     auto decomposed = persistent::persistent_store::decompose_path(path);
-    remote_->write<file_type>(partition_, decomposed.second);
+    remote->write<file_type>(partition_, decomposed.second);
     flushed = true;
   }
   partition_.clear();
