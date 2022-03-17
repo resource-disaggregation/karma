@@ -214,7 +214,7 @@ if __name__ == "__main__":
     max_files = capacity
     for i in range(max_files):
         filename = '/%s/block%d.txt' % (tenant_id, i)
-        client.create_file(filename, 'local://tmp')
+        client.open_or_create_file(filename, 'local://tmp')
     print('Pre-created files')
         
 
