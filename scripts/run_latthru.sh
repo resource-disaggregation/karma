@@ -7,19 +7,22 @@ trap cleanup EXIT
 
 cleanup;
 
-dir_host=$1
-dir_porta=$2
-dir_portb=$3
-block_size=$4
-num_tenants=$5
-duration=$6
+cfg=$1
+dir_host=$2
+dir_porta=$3
+dir_portb=$4
+block_size=$5
+num_tenants=$6
+duration=$7
 fair_share=100
+
+rm -f ~/karma-eval/$cfg-latthru*
 
 python3 microbench_pickles.py $num_tenants $fair_share $duration ~/karma-eval/microbench_demands.pickle ~/karma-eval/microbench_allocs.pickle
 
 echo "Starting tenants"
 for para in 1 2 4 8 16; do
-    config="latthru-para$para";
+    config="$cfg-latthru-para$para";
     echo $config;
     pids=()
     for ((tenant=0;tenant<$num_tenants;tenant++)); do
