@@ -11,6 +11,8 @@ trap cleanup EXIT
 
 cleanup;
 
+ulimit -n 10240
+
 config=$1
 host=$2
 # set large lease period
