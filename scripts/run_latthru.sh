@@ -18,11 +18,10 @@ fair_share=100
 python3 microbench_pickles.py $num_tenants $fair_share $duration ~/karma-eval/microbench_demands.pickle ~/karma-eval/microbench_allocs.pickle
 
 echo "Starting tenants"
-for para in 1 2 4 8 16 do
-    config="latthru-para$para"
+for para in 1 2 4 8 16; do
+    config="latthru-para$para";
     echo $config;
-    for ((tenant=0;tenant<$num_tenants;tenant++))
-    do
+    for ((tenant=0;tenant<$num_tenants;tenant++)); do
         python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $para ./microbench_demands.pickle $block_size foobar 0 0 ./microbench_allocs.pickle $fair_share > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
