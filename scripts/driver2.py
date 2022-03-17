@@ -179,14 +179,14 @@ if __name__ == "__main__":
     tenant_id = sys.argv[4]
     para = int(sys.argv[5])
     fair_share = 100
-    demands = get_demands(sys.argv[6], fair_share, tenant_id)
-    # demands = [4, 4, 4, 4, 0]
+    #demands = get_demands(sys.argv[6], fair_share, tenant_id)
+    demands = [1, 1, 1, 1, 1]
     dur_epoch = 1
     oracle = bool(int(sys.argv[9]))
     selfish = bool(int(sys.argv[10]))
-    allocations = get_allocations(sys.argv[11], tenant_id)
+    #allocations = get_allocations(sys.argv[11], tenant_id)
     capacity = int(sys.argv[12])
-    # allocations = [4, 2, 1, 10, 3]
+    allocations = [1, 1, 1, 1, 1]
 
     # Create queues
     karma_queues = []
