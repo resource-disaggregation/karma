@@ -25,7 +25,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
     # Connect the directory server with the corresponding port numbers
     # monitor_q.cancel_join_thread()
     local_random = random.Random()
-    local_random.seed(1995 + tenant_id)
+    local_random.seed(1995 + int(tenant_id))
     
     client = JiffyClient(dir_host, dir_porta, dir_portb)
     # s3 = boto3.client('s3')
