@@ -22,7 +22,7 @@ for para in 1 2 4 8 16; do
     config="latthru-para$para";
     echo $config;
     for ((tenant=0;tenant<$num_tenants;tenant++)); do
-        python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $para ./microbench_demands.pickle $block_size foobar 0 0 ./microbench_allocs.pickle $fair_share > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+        python3 -u driver2.py $dir_host $dir_porta $dir_portb $tenant $para ./microbench_demands.pickle $block_size foobar 0 0 ./microbench_allocs.pickle $fair_share > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
     done
