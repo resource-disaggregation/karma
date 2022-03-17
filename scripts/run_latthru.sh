@@ -18,7 +18,7 @@ fair_share=100
 python3 microbench_pickles.py $num_tenants $fair_share $duration ~/karma-eval/microbench_demands.pickle ~/karma-eval/microbench_allocs.pickle
 
 echo "Starting tenants"
-for para in (1 2 4 8 16) do
+for para in 1 2 4 8 16 do
     config="latthru-para$para"
     echo $config;
     for ((tenant=0;tenant<$num_tenants;tenant++))
