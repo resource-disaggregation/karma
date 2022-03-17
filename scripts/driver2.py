@@ -85,6 +85,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 jiffy_blocks += 1
+                print('Read key %d from Jiffy' % (access_key))
             else:
                 # Read from S3
                 start_time = datetime.datetime.now()
@@ -93,6 +94,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 persistent_blocks += 1
+                print('Read key %d from S3' % (access_key))
         else:
             if(access_key < cur_alloc):
                 start_time = datetime.datetime.now()
@@ -101,6 +103,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 jiffy_blocks += 1
+                print('Write key %d to Jiffy' % (access_key))
             else:
                 # Write to S3
                 start_time = datetime.datetime.now()
@@ -109,6 +112,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
                 persistent_blocks += 1
+                print('Write key %d to S3' % (access_key))
         total_ops += 1
         
     return
