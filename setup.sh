@@ -7,9 +7,6 @@ sudo apt-get install python3-setuptools
 sudo apt install default-jdk
 sudo apt install maven
 
-git clone https://github.com/webglider/jiffy
-git checkout asplos23
-
 mkdir -p build
 cd build
 cmake .. && make -j
