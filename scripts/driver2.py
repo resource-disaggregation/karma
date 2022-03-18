@@ -75,7 +75,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
 
         # Perform access
         access_key = local_random.randint(0, cur_wss-1)
-        access_file = '/%s/block%d.txt' % (tenant_id, access_key)
+        access_file = '/%s/block%d.txt' % (tenant_id, access_key % max_files)
         jiffy_fd[access_file].seek(0)
         if(local_random.random() < 0.5):
             if(access_key < cur_alloc):

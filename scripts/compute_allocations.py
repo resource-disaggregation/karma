@@ -50,7 +50,7 @@ alloc_gran = 1
 if len(sys.argv) >= 14:
     alloc_gran = int(sys.argv[13])
 
-prefix = '/home/ubuntu/karma-eval/' + config
+prefix = '~/karma-eval/' + config
 
 raw_demands = get_demands(trace_file, average)
 
@@ -74,10 +74,10 @@ else:
         raise Exception('Unsupported estimator')
 
     # Simulate reclaim
-    for t in demands:
-        for i in range(len(demands[t])):
-            if demands[t][i] < guarantee and demands[t][i] < raw_demands[t][i]:
-                demands[t][i] = min(raw_demands[t][i], guarantee)
+    # for t in demands:
+    #     for i in range(len(demands[t])):
+    #         if demands[t][i] < guarantee and demands[t][i] < raw_demands[t][i]:
+    #             demands[t][i] = min(raw_demands[t][i], guarantee)
 
 # Selfish tenants
 for t in selfish_tenants:
