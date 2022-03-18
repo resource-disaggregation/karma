@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 
 sudo apt update
-sudo apt install build-essential
-sudo apt install cmake
-sudo apt-get install python3-setuptools
-sudo apt install default-jdk
-sudo apt install maven
+sudo apt install -y build-essential cmake python3-setuptools openjdk-8-jre openjdk-8-jdk maven
 
 mkdir -p build
 cd build

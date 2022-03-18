@@ -40,6 +40,7 @@ if (Boost_BUILD)
   endforeach ()
   ExternalProject_Add(boost_ep
           URL https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION_STR}.tar.gz
+          URL https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION_STR}.tar.gz
           UPDATE_COMMAND ""
           CONFIGURE_COMMAND ./bootstrap.sh --prefix=${Boost_PREFIX}
           BUILD_COMMAND ./b2 link=static variant=release cxxflags=-fPIC cflags=-fPIC --prefix=${Boost_PREFIX} ${Boost_COMPONENT_FLAGS} install
