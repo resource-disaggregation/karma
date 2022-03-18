@@ -39,14 +39,14 @@ echo "Allocations computed"
 if [ "$mode" != "norun" ]; then
 
     mapfile -t alt_tenants < $alt_file;
-    mapfile -t selfish_tenants < $selfish_file;
+    mapfile -t selfish_tenants < $selfish_file;1f
 
     pids=()
 
     echo "Starting altruistic tenants"
     for tenant in "${alt_tenants[@]}"
     do
-        python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 0 ~/karma-eval/"$config.alloc" $capacity > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+        python3 -u driver2.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 0 ~/karma-eval/"$config.alloc" $capacity > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
     done
@@ -56,7 +56,7 @@ if [ "$mode" != "norun" ]; then
 
     for tenant in "${selfish_tenants[@]}"
     do
-        python3 -u driver.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 1 ~/karma-eval/"$config.alloc" $capacity > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+        python3 -u driver2.py $dir_host $dir_porta $dir_portb $tenant $num_threads $trace_file $block_size $backing_path $oracle 1 ~/karma-eval/"$config.alloc" $capacity > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
     done
