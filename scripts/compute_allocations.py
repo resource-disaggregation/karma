@@ -50,7 +50,7 @@ alloc_gran = 1
 if len(sys.argv) >= 14:
     alloc_gran = int(sys.argv[13])
 
-prefix = '~/karma-eval/' + config
+prefix = os.path.expanduser('~/karma-eval/') + config
 
 raw_demands = get_demands(trace_file, average)
 
