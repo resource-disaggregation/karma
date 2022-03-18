@@ -39,7 +39,7 @@ echo "Allocations computed"
 if [ "$mode" != "norun" ]; then
 
     mapfile -t alt_tenants < $alt_file;
-    mapfile -t selfish_tenants < $selfish_file;1f
+    mapfile -t selfish_tenants < $selfish_file;
 
     pids=()
 
