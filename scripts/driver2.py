@@ -11,16 +11,16 @@ import pickle
 import math
 import datetime
 import queue
-# import boto3
+import boto3
 import uuid
 import random
 
-S3_READ_LAT = 0.0121
-S3_WRITE_LAT = 0.0258
+# S3_READ_LAT = 0.0121
+# S3_WRITE_LAT = 0.0258
 
 
 # quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, create_events[i]
-def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, backing_path, open_event, tenant_id, selfish, max_files):
+def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, backing_path, open_event, tenant_id, selfish, max_files, s3_tenant_id, s3_map):
     # Initialize
     # Connect the directory server with the corresponding port numbers
     # monitor_q.cancel_join_thread()
@@ -28,9 +28,10 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
     local_random.seed(1995 + int(tenant_id))
     
     client = JiffyClient(dir_host, dir_porta, dir_portb)
-    # s3 = boto3.client('s3')
+    s3 = boto3.client('s3')
     buf = 'a' * block_size
     jiffy_fd = {}
+    s3_map = {}
     lat_sum = 0
     lat_count = 0
     total_ops = 0
@@ -89,7 +90,15 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
             else:
                 # Read from S3
                 start_time = datetime.datetime.now()
-                time.sleep(S3_READ_LAT)
+                try:
+                    get_resp = s3.get_object(Bucket=backing_path, Key=s3_tenant_id + '/' + s3_map[access_key])
+                except s3.exceptions.NoSuchKey:
+                    resp = s3.put_object(Bucket=backing_path, Key=s3_tenant_id + '/' + s3_map[access_key], Body=buf)
+                    if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+                        raise Exception('S3 write failed')
+                    get_resp = s3.get_object(Bucket=backing_path, Key=s3_tenant_id + '/' + s3_map[access_key])
+                if get_resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+                        raise Exception('S3 read failed')
                 elapsed = datetime.datetime.now() - start_time
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
@@ -107,7 +116,9 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
             else:
                 # Write to S3
                 start_time = datetime.datetime.now()
-                time.sleep(S3_WRITE_LAT)
+                resp = s3.put_object(Bucket=backing_path, Key=s3_tenant_id + '/' + s3_map[access_key], Body=buf)
+                if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+                    raise Exception('S3 write failed')
                 elapsed = datetime.datetime.now() - start_time
                 lat_sum += elapsed.total_seconds()
                 lat_count += 1
@@ -216,12 +227,19 @@ if __name__ == "__main__":
         filename = '/%s/block%d.txt' % (tenant_id, i)
         client.open_or_create_file(filename, 'local://tmp')
     print('Pre-created files')
+
+    # Create S3 map
+    s3_tenant_id = uuid.uuid4().hex
+    s3_map = {}
+    max_wss = max(demands)
+    for x in range(max_wss):
+        s3_map[x] = uuid.uuid4().hex
         
 
     # Create workers
     workers = []
     for i in range(para):
-        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, open_events[i], tenant_id, selfish, max_files))
+        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, open_events[i], tenant_id, selfish, max_files, s3_tenant_id, s3_map))
         workers.append(p)
 
     # Start workers
