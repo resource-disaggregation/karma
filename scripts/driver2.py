@@ -31,7 +31,6 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
     s3 = boto3.client('s3')
     buf = 'a' * block_size
     jiffy_fd = {}
-    s3_map = {}
     lat_sum = 0
     lat_count = 0
     total_ops = 0
