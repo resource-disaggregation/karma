@@ -49,8 +49,10 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
     cur_wss = 0
     cur_alloc = 0
 
+    quit_flag = False
+
     while True:
-        if quit_signal.is_set():
+        if quit_signal.is_set() or quit_flag:
             resq.put({'lat_sum': lat_sum, 'lat_count': lat_count, 'jiffy_blocks': jiffy_blocks, 'persistent_blocks': persistent_blocks, 'total_ops': total_ops})
             print('Worker exiting')
             break
@@ -64,6 +66,10 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
         except queue.Empty:
             # no update
             got_task = False
+
+        if got_task and task and task['op'] == 'quit':
+            quit_flag = True
+            continue
 
         if got_task and task and task['op'] == 'update':
             cur_wss = task['wss']
@@ -269,7 +275,7 @@ if __name__ == "__main__":
 
 
     for i in range(para):
-        karma_queues[i].put(None)
+        karma_queues[i].put({'op': 'quit'})
     
     quit_signal.set()
     print('Epochs complete')
