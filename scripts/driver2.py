@@ -20,7 +20,7 @@ import random
 
 
 # quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, create_events[i]
-def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, backing_path, open_event, tenant_id, selfish, max_files, s3_tenant_id, s3_map):
+def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, backing_path, open_event, tenant_id, selfish, max_files, s3_tenant_id, s3_map, fair_share):
     # Initialize
     # Connect the directory server with the corresponding port numbers
     # monitor_q.cancel_join_thread()
@@ -34,6 +34,8 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
     lat_sum = 0
     lat_count = 0
     total_ops = 0
+    good_ops = 0 # when demand > fair-share
+    normal_ops = 0 # when demand <= fair-share
     jiffy_blocks = 0
     persistent_blocks = 0
     print('Worker connected')
@@ -53,7 +55,7 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
 
     while True:
         if quit_signal.is_set() or quit_flag:
-            resq.put({'lat_sum': lat_sum, 'lat_count': lat_count, 'jiffy_blocks': jiffy_blocks, 'persistent_blocks': persistent_blocks, 'total_ops': total_ops})
+            resq.put({'lat_sum': lat_sum, 'lat_count': lat_count, 'jiffy_blocks': jiffy_blocks, 'persistent_blocks': persistent_blocks, 'total_ops': total_ops, 'good_ops': good_ops, 'normal_ops': normal_ops})
             print('Worker exiting')
             break
 
@@ -130,6 +132,10 @@ def worker(quit_signal, q, resq, dir_host, dir_porta, dir_portb, block_size, bac
                 persistent_blocks += 1
                 # print('Write key %d to S3' % (access_key))
         total_ops += 1
+        if cur_wss > fair_share:
+            good_ops += 1
+        else:
+            normal_ops += 1
         
     return
 
@@ -244,7 +250,7 @@ if __name__ == "__main__":
     # Create workers
     workers = []
     for i in range(para):
-        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, open_events[i], tenant_id, selfish, max_files, s3_tenant_id, s3_map))
+        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, open_events[i], tenant_id, selfish, max_files, s3_tenant_id, s3_map, fair_share))
         workers.append(p)
 
     # Start workers
@@ -296,6 +302,8 @@ if __name__ == "__main__":
     jiffy_blocks = 0
     persistent_blocks = 0
     total_ops = 0
+    good_ops = 0
+    normal_ops = 0
     for i in range(para):
         res = results.get()
         lat_sum += res['lat_sum']
@@ -303,6 +311,9 @@ if __name__ == "__main__":
         jiffy_blocks += res['jiffy_blocks']
         persistent_blocks += res['persistent_blocks']
         total_ops += res['total_ops']
+        good_ops += res['good_ops']
+        normal_ops += res['normal_ops']
+
 
     type_str = 'selfish' if selfish else 'alt'
     prefix_str = '<' + tenant_id + '>' + ' [' + type_str + '] '
@@ -314,6 +325,8 @@ if __name__ == "__main__":
     print(prefix_str + 'Persistent ops: ' + str(persistent_blocks))
     print(prefix_str + 'Total ops: ' + str(total_ops))
     print(prefix_str + 'Throughput: ' + str(float(total_ops)/(time_end-time_start)))
+    print(prefix_str + 'Goodput: ' + str(float(good_ops)/(time_end-time_start)))
+    print(prefix_str + 'Normalput: ' + str(float(normal_ops)/(time_end-time_start)))
 
     
 
