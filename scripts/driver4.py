@@ -75,7 +75,8 @@ def worker(idx, task_q, results, dir_host, dir_porta, dir_portb, block_size, bac
     s3 = boto3.client('s3')
     buf = 'a' * block_size
 
-    resp = s3.put_object(Bucket=backing_path, Key=s3_tenant_id + '/' + s3_block_id, Body=buf)
+    s3_key = uuid.uuid4().hex + '/' + uuid.uuid4().hex
+    resp = s3.put_object(Bucket=backing_path, Key=s3_key, Body=buf)
     if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
         raise Exception('Initial S3 write failed')
     print('Created S3 key')
@@ -92,7 +93,7 @@ def worker(idx, task_q, results, dir_host, dir_porta, dir_portb, block_size, bac
     # Main loop
     for i in range(len(task_q)):
         task = task_q[i]
-        perform_accesses(task['cur_wss'], task['cur_alloc'], local_random, jiffy_fd, s3, backing_path, s3_tenant_id + '/' + s3_block_id, block_size, buf, task['duration'], stats)
+        perform_accesses(task['cur_wss'], task['cur_alloc'], local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, task['duration'], stats)
 
     results.put(stats)
     print('Worker exiting')
