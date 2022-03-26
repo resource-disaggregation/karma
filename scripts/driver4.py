@@ -166,10 +166,6 @@ if __name__ == "__main__":
 
     print('Started workers')
 
-    # Wait for workers to finish
-    for i in range(para):
-        workers[i].join()
-
 
     # Aggregate stats
     stats = {}
@@ -189,7 +185,12 @@ if __name__ == "__main__":
         for y in range(10000):
             stats['latency_hist'][y] += res['latency_hist'][y]
 
-    # Get stats
+    # Wait for worker threads to exit
+    for i in range(para):
+        workers[i].join()
+
+
+    # Output stats
     num_epochs = len(demands)
     total_duration = num_epochs*dur_epoch
 
