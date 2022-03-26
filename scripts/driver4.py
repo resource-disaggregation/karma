@@ -32,7 +32,7 @@ def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_key,
                 jiffy_fd.write(buf)
             elapsed = datetime.datetime.now() - start_time
             stats['latency_sum'] += elapsed.total_seconds()
-            ten_micros = elapsed.total_seconds() * 1e5
+            ten_micros = int(elapsed.total_seconds() * 1e5)
             ten_micros = min(ten_micros, 10000-1)
             stats['latency_hist'][ten_micros] += 1
             stats['jiffy_ops'] += 1
