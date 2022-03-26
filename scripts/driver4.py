@@ -143,8 +143,8 @@ if __name__ == "__main__":
         cur_allocation = allocations[e]
         for i in range(cur_demand):
             task = {'block_id': i, 'in_jiffy': (cur_allocation > i), 'duration': dur_epoch}
-            task_queues[wid].append(task)
-            wid = (wid + 1)%para
+            task_queues[widx].append(task)
+            widx = (widx + 1)%para
 
     results = Queue()
 
