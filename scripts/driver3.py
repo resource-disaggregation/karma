@@ -263,6 +263,7 @@ if __name__ == "__main__":
     resp = s3.put_object(Bucket=backing_path, Key=s3_tenant_id + '/' + s3_block_id, Body=buf)
     if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
         raise Exception('Initial S3 write failed')
+    print('Created S3 key')
 
     stats = {}
     stats['total_ops'] = 0
