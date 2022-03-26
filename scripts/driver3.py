@@ -235,12 +235,18 @@ if __name__ == "__main__":
     tenant_id = sys.argv[6]
     block_id = int(sys.argv[7])
     fair_share = int(sys.argv[8])
-    demands = get_demands(sys.argv[9], fair_share, tenant_id)
+    if sys.argv[9] == 'foobar':
+        demands = [1, 1, 1, 1, 1]
+    else:
+        demands = get_demands(sys.argv[9], fair_share, tenant_id)
     # demands = [1, 1, 1, 1, 1]
     dur_epoch = 1
     selfish = bool(int(sys.argv[10]))
-    allocations = get_allocations(sys.argv[11], tenant_id)
-    # allocations = [1, 1, 1, 1, 1]
+    if sys.argv[11] == 'foobar':
+        allocations = [1, 1, 1, 1, 1]
+    else:    
+        allocations = get_allocations(sys.argv[11], tenant_id)
+    
     # capacity = int(sys.argv[12])
 
     client = JiffyClient(dir_host, dir_porta, dir_portb)
