@@ -2,6 +2,7 @@
 # python3 driver.py 127.0.0.1 9090 9091 92 1 /home/midhul/snowflake_demands_nogaps10.pickle $((4 * 1024)) /home/midhul/nfs/jiffy_dump 0 0
 
 from itertools import count
+from multiprocessing.connection import Client
 from threading import local
 import time
 import os
@@ -13,6 +14,7 @@ import math
 import datetime
 import queue
 import boto3
+from botocore.exceptions import ClientError
 import uuid
 import random
 import string
@@ -42,12 +44,18 @@ def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_keys
             # S3
             s3_key = s3_keys[local_random.randint(0, 99)]
             start_time = datetime.datetime.now()
-            if(local_random.random() < 0.5):
-                resp = s3.get_object(Bucket=backing_path, Key=s3_key)
-            else:
-                resp = s3.put_object(Bucket=backing_path, Key=s3_key, Body=buf)
-            if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
-                raise Exception('S3 op failed')
+            try:
+                if(local_random.random() < 0.5):
+                    resp = s3.get_object(Bucket=backing_path, Key=s3_key)
+                else:
+                    resp = s3.put_object(Bucket=backing_path, Key=s3_key, Body=buf)
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'SlowDown':
+                    print('Slowdown error')
+                else:
+                    raise Exception('S3 op failed')
+            # if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+            #     raise Exception('S3 op failed')
             elapsed = datetime.datetime.now() - start_time
             stats['latency_sum'] += elapsed.total_seconds()
             ten_micros = int(elapsed.total_seconds() * 1e5)
