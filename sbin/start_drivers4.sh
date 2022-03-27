@@ -48,7 +48,8 @@ if [ "$mode" != "norun" ]; then
         if [[ $(($tenant%$num_shards)) -ne $shard_idx ]]; then
             continue;
         fi
-        python3 -u $sbin/driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path $tenant $fair_share $trace_file 0 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+        s3_shard=$(($tenant%10));
+        python3 -u $sbin/driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path$s3_shard $tenant $fair_share $trace_file 0 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
     done
@@ -61,7 +62,8 @@ if [ "$mode" != "norun" ]; then
         if [[ $(($tenant%$num_shards)) -ne $shard_idx ]]; then
             continue;
         fi
-        python3 -u $sbin/driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path $tenant $fair_share $trace_file 1 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+        s3_shard=$(($tenant%10));
+        python3 -u $sbin/driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path$s3_shard $tenant $fair_share $trace_file 1 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
     done
