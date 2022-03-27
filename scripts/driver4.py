@@ -20,11 +20,11 @@ import string
 # S3_READ_LAT = 0.0121
 # S3_WRITE_LAT = 0.0258
 
-def perform_accesses(cur_wss, cur_alloc, local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, duration, stats):
+def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, duration, stats):
     begin_ts = datetime.datetime.now()
     while ((datetime.datetime.now() - begin_ts).total_seconds() < duration):
-        access_key = local_random.randint(0, cur_wss-1)
-        in_jiffy = (access_key < cur_alloc)
+        # access_key = local_random.randint(0, cur_wss-1)
+        # in_jiffy = (access_key < cur_alloc)
         if in_jiffy:
             jiffy_fd.seek(0)
             start_time = datetime.datetime.now()
@@ -93,7 +93,7 @@ def worker(idx, task_q, results, dir_host, dir_porta, dir_portb, block_size, bac
     # Main loop
     for i in range(len(task_q)):
         task = task_q[i]
-        perform_accesses(task['cur_wss'], task['cur_alloc'], local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, task['duration'], stats)
+        perform_accesses(task['in_jiffy'], local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, task['duration'], stats)
 
     results.put(stats)
     print('Worker exiting')
@@ -151,7 +151,7 @@ if __name__ == "__main__":
         cur_demand = demands[e]
         cur_allocation = allocations[e]
         for i in range(cur_demand):
-            task = {'block_id': i, 'cur_wss': cur_demand, 'cur_alloc': cur_allocation, 'duration': dur_epoch}
+            task = {'block_id': i, 'in_jiffy': (cur_allocation > i), 'duration': dur_epoch}
             task_queues[widx].append(task)
             widx = (widx + 1)%para
 
