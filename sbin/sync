@@ -3,7 +3,6 @@
 sbin="`dirname "$0"`"
 sbin="`cd "$sbin"; pwd`"
 
-. "$sbin/jiffy-config.sh"
 
 # If the servers file is specified in the command line,
 # then it takes precedence over the definition in
@@ -12,34 +11,6 @@ if [ -f "$JIFFY_SERVERS" ]; then
   SERVERLIST=`cat "$JIFFY_SERVERS"`
 fi
 
-# Check if --config is passed as an argument. It is an optional parameter.
-# Exit if the argument is not a directory.
-if [ "$1" == "--config" ]
-then
-  shift
-  conf_dir="$1"
-  if [ ! -d "$conf_dir" ]
-  then
-    echo "ERROR : $conf_dir is not a directory"
-    echo $usage
-    exit 1
-  else
-    export JIFFY_CONF_DIR="$conf_dir"
-  fi
-  shift
-fi
-
-if [ "$SERVERLIST" = "" ]; then
-  if [ "$JIFFY_SERVERS" = "" ]; then
-    if [ -f "${JIFFY_CONF_DIR}/storage.hosts" ]; then
-      SERVERLIST=`cat "${JIFFY_CONF_DIR}/storage.hosts"`
-    else
-      SERVERLIST=localhost
-    fi
-  else
-    SERVERLIST=`cat "${JIFFY_SERVERS}"`
-  fi
-fi
 
 DELETE_FLAG=""
 
