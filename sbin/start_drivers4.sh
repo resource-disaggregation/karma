@@ -32,7 +32,7 @@ shard_idx="${15}"
 
 rm -f ~/karma-eval/$config.tenant*
 
-python3 $sbin/compute_allocations.py $config $trace_file $alloc $fair_share $init_credits 0 $fair_share 1 none 0 $alt_file $selfish_file
+python3 ~/jiffy/scripts/compute_allocations.py $config $trace_file $alloc $fair_share $init_credits 0 $fair_share 1 none 0 $alt_file $selfish_file
 echo "Allocations computed"
 
 if [ "$mode" != "norun" ]; then
