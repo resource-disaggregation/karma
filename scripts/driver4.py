@@ -15,6 +15,7 @@ import datetime
 import queue
 import boto3
 from botocore.exceptions import ClientError
+from botocore.config import Config
 import uuid
 import random
 import string
@@ -81,7 +82,13 @@ def worker(idx, task_q, results, dir_host, dir_porta, dir_portb, block_size, bac
     # Create block in S3
     s3_tenant_id = ''.join(local_random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
     s3_block_id = ''.join(local_random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
-    s3 = boto3.client('s3')
+    config = Config(
+        retries = {
+            'max_attempts': 10,
+            'mode': 'standard'
+        }
+    )
+    s3 = boto3.client('s3', config=config)
     buf = 'a' * block_size
 
     s3_keys = [uuid.uuid4().hex + '/' + uuid.uuid4().hex for _ in range(100)]
