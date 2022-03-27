@@ -5,7 +5,5 @@ sbin="`cd "$sbin"; pwd`"
 
 mkdir -p /home/ubuntu/deploy
 
-cp $sbin/../build/storage/storaged /home/ubuntu/deploy/
-cp $sbin/../build/directory/directoryd /home/ubuntu/deploy/
 cp $sbin/../scripts/driver4.py /home/ubuntu/deploy/
 cp $sbin/* /home/ubuntu/deploy/

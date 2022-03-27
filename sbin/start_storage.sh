@@ -3,6 +3,8 @@
 sbin="`dirname "$0"`"
 sbin="`cd "$sbin"; pwd`"
 
+jiffybin=/home/ubuntu/jiffy/build
+
 function cleanup() {
     killall storaged;
     echo "Cleaned up";
@@ -37,7 +39,7 @@ for ((i = 0 ; i < $num_storaged ; i++)); do
     if (( $i < $(($num_blocks%$num_storaged)) )); then
         cur_blocks=$(($cur_blocks+1))
     fi
-    JIFFY_DIRECTORY_HOST=$host JIFFY_STORAGE_HOST=$(ifconfig ens5 | grep 'inet' | head -n 1 | awk '{print $2}') JIFFY_STORAGE_MGMT_PORT=$(($cur_port+3)) JIFFY_STORAGE_SCALING_PORT=$(($cur_port+4)) JIFFY_STORAGE_SERVICE_PORT=$(($cur_port+5)) JIFFY_STORAGE_NUM_BLOCKS=$cur_blocks JIFFY_STORAGE_NUM_BLOCK_GROUPS=1 JIFFY_BLOCK_CAPACITY=$block_size ../build/storage/storaged > ~/karma-eval/$config.storage$i.log 2>&1 &
+    JIFFY_DIRECTORY_HOST=$host JIFFY_STORAGE_HOST=$(ifconfig ens5 | grep 'inet' | head -n 1 | awk '{print $2}') JIFFY_STORAGE_MGMT_PORT=$(($cur_port+3)) JIFFY_STORAGE_SCALING_PORT=$(($cur_port+4)) JIFFY_STORAGE_SERVICE_PORT=$(($cur_port+5)) JIFFY_STORAGE_NUM_BLOCKS=$cur_blocks JIFFY_STORAGE_NUM_BLOCK_GROUPS=1 JIFFY_BLOCK_CAPACITY=$block_size $jiffybin/storage/storaged > ~/karma-eval/$config.storage$i.log 2>&1 &
     pids+=($!);
     echo "Launched storage server $i";
 done

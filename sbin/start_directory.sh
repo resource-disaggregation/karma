@@ -3,6 +3,8 @@
 sbin="`dirname "$0"`"
 sbin="`cd "$sbin"; pwd`"
 
+jiffybin=/home/ubuntu/jiffy/build
+
 function cleanup() {
     killall directoryd;
     echo "Cleaned up";
@@ -30,6 +32,6 @@ public_blocks="${10}"
 pids=()
 
 # Start directory server
-JIFFY_DIRECTORY_HOST=$host JIFFY_LEASE_PERIOD_MS=999999999 $sbin/directoryd --alloc $alloc -n $num_tenants --init_credits $init_credits --algo_interval $algo_interval --public_blocks $public_blocks > ~/karma-eval/$config.dir.log 2>&1 &
+JIFFY_DIRECTORY_HOST=$host JIFFY_LEASE_PERIOD_MS=999999999 $jiffybin/directory/directoryd --alloc $alloc -n $num_tenants --init_credits $init_credits --algo_interval $algo_interval --public_blocks $public_blocks > ~/karma-eval/$config.dir.log 2>&1 &
 pids+=($!);
 echo "Launched directory server";
