@@ -10,8 +10,6 @@ function cleanup() {
     echo "Cleaned up";
 }
 
-
-
 cleanup;
 
 ulimit -n 10240
