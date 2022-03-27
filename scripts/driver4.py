@@ -129,14 +129,14 @@ if __name__ == "__main__":
     tenant_id = sys.argv[6]
     fair_share = int(sys.argv[7])
     if sys.argv[8] == 'foobar':
-        demands = [1, 1, 1, 1, 1]
+        demands = [fair_share for _ in range(30)]
     else:
         demands = get_demands(sys.argv[8], fair_share, tenant_id)
     # demands = [1, 1, 1, 1, 1]
     dur_epoch = 1
     selfish = bool(int(sys.argv[9]))
     if sys.argv[10] == 'foobar':
-        allocations = [1, 1, 1, 1, 1]
+        allocations = [0 for _ in range(30)]
     else:    
         allocations = get_allocations(sys.argv[10], tenant_id)
     
