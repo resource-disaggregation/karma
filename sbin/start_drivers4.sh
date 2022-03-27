@@ -1,4 +1,7 @@
-# ./run_drivers.sh karma-tenants10-dur15-c100 128.84.155.69 9090 9091 /home/midhul/snowflake_demands_nogaps10_15min.pickle $((128 * 1024)) /home/midhul/nfs/jiffy_dump 1 0
+#!/usr/bin/env bash
+
+sbin="`dirname "$0"`"
+sbin="`cd "$sbin"; pwd`"
 
 function cleanup() {
     killall python3;
@@ -29,7 +32,7 @@ shard_idx="${15}"
 
 rm -f ~/karma-eval/$config.tenant*
 
-python3 compute_allocations.py $config $trace_file $alloc $fair_share $init_credits 0 $fair_share 1 none 0 $alt_file $selfish_file
+python3 $sbin/compute_allocations.py $config $trace_file $alloc $fair_share $init_credits 0 $fair_share 1 none 0 $alt_file $selfish_file
 echo "Allocations computed"
 
 if [ "$mode" != "norun" ]; then
@@ -45,7 +48,7 @@ if [ "$mode" != "norun" ]; then
         if [[ $(($tenant%$num_shards)) -ne $shard_idx ]]; then
             continue;
         fi
-        python3 -u driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path $tenant $fair_share $trace_file 0 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+        python3 -u $sbin/driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path $tenant $fair_share $trace_file 0 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
     done
@@ -58,7 +61,7 @@ if [ "$mode" != "norun" ]; then
         if [[ $(($tenant%$num_shards)) -ne $shard_idx ]]; then
             continue;
         fi
-        python3 -u driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path $tenant $fair_share $trace_file 1 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
+        python3 -u $sbin/driver4.py $dir_host $dir_porta $dir_portb $block_size $backing_path $tenant $fair_share $trace_file 1 ~/karma-eval/"$config.alloc" > ~/karma-eval/$config.tenant$tenant.txt 2>&1 &
         pids+=($!);
         echo "Launched tenant$tenant";
     done
