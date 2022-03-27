@@ -10,7 +10,6 @@ function cleanup() {
     echo "Cleaned up";
 }
 
-trap cleanup EXIT
 
 
 cleanup;
