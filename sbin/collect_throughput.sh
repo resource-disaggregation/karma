@@ -11,4 +11,4 @@ static=$(cat ~/karma-eval/$config-static.results | grep -i throughput | awk '{pr
 maxmin=$(cat ~/karma-eval/$config-maxmin.results | grep -i throughput | awk '{print $5}' | sort -n)
 karma=$(cat ~/karma-eval/$config-karma.results | grep -i throughput | awk '{print $5}' | sort -n)
 
-paste <(echo $numbers) <(echo $static) <(echo $maxmin) <(echo $karma)
+paste <(for ((i = 1 ; i <= $num_users ; i++)); do echo $i; done) <(cat ~/karma-eval/$config-static.results | grep -i throughput | awk '{print $5}' | sort -n) <(cat ~/karma-eval/$config-maxmin.results | grep -i throughput | awk '{print $5}' | sort -n) <(cat ~/karma-eval/$config-karma.results | grep -i throughput | awk '{print $5}' | sort -n)
