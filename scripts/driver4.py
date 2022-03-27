@@ -20,7 +20,7 @@ import string
 # S3_READ_LAT = 0.0121
 # S3_WRITE_LAT = 0.0258
 
-def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, duration, stats):
+def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_keys, block_size, buf, duration, stats):
     begin_ts = datetime.datetime.now()
     while ((datetime.datetime.now() - begin_ts).total_seconds() < duration):
         # access_key = local_random.randint(0, cur_wss-1)
@@ -40,6 +40,7 @@ def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_key,
             stats['jiffy_ops'] += 1
         else:
             # S3
+            s3_key = s3_keys[local_random.randint(0, 99)]
             start_time = datetime.datetime.now()
             if(local_random.random() < 0.5):
                 resp = s3.get_object(Bucket=backing_path, Key=s3_key)
@@ -75,11 +76,12 @@ def worker(idx, task_q, results, dir_host, dir_porta, dir_portb, block_size, bac
     s3 = boto3.client('s3')
     buf = 'a' * block_size
 
-    s3_key = uuid.uuid4().hex + '/' + uuid.uuid4().hex
-    resp = s3.put_object(Bucket=backing_path, Key=s3_key, Body=buf)
-    if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
-        raise Exception('Initial S3 write failed')
-    print('Created S3 key')
+    s3_keys = [uuid.uuid4().hex + '/' + uuid.uuid4().hex for _ in range(100)]
+    for s3_key in s3_keys:   
+        resp = s3.put_object(Bucket=backing_path, Key=s3_key, Body=buf)
+        if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+            raise Exception('Initial S3 write failed')
+    print('Created S3 keys')
 
     stats = {}
     stats['total_ops'] = 0
@@ -93,7 +95,7 @@ def worker(idx, task_q, results, dir_host, dir_porta, dir_portb, block_size, bac
     # Main loop
     for i in range(len(task_q)):
         task = task_q[i]
-        perform_accesses(task['in_jiffy'], local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, task['duration'], stats)
+        perform_accesses(task['in_jiffy'], local_random, jiffy_fd, s3, backing_path, s3_keys, block_size, buf, task['duration'], stats)
 
     results.put(stats)
     print('Worker exiting')
