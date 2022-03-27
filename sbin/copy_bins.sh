@@ -3,9 +3,9 @@
 sbin="`dirname "$0"`"
 sbin="`cd "$sbin"; pwd`"
 
-mkdir -p /home/ubunu/deploy
+mkdir -p /home/ubuntu/deploy
 
-cp $sbin/../build/storage/storaged /home/ubunu/deploy/
-cp $sbin/../build/directory/directoryd /home/ubunu/deploy/
-cp $sbin/../scripts/driver4.py /home/ubunu/deploy/
-cp $sbin/* /home/ubunu/deploy/
+cp $sbin/../build/storage/storaged /home/ubuntu/deploy/
+cp $sbin/../build/directory/directoryd /home/ubuntu/deploy/
+cp $sbin/../scripts/driver4.py /home/ubuntu/deploy/
+cp $sbin/* /home/ubuntu/deploy/
