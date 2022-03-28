@@ -1,0 +1,15 @@
+JIFFY_SERVERS=~/karma-hosts.txt ./hosts.sh mkdir -p /home/ubuntu/deploy
+
+./copy_bins
+
+JIFFY_SERVERS=~/karma-hosts.txt ./sync /home/ubuntu/deploy/
+
+./start_directory.sh server 172.31.104.81 random 100 0 36 1024 100000 1000 0
+
+JIFFY_SERVERS=~/karma-servers.txt ./hosts.sh /home/ubuntu/deploy/start_storage.sh server 172.31.104.81 random 100 0 36 1024 100000 1000 0
+
+./run_clients.sh ~/karma-clients.txt 100users-static 172.31.104.81 9090 9091 /home/ubuntu/deploy/tenants100_workload.pickle 1024 karma-backing 10 /home/ubuntu/deploy/alt100-alt.txt /home/ubuntu/deploy/alt100-selfish.txt static 0 run
+
+JIFFY_SERVERS=~/karma-clients.txt ./hosts.sh cat ~/karma-eval/100users-set1-alt25.tenant* | grep -i error
+
+JIFFY_SERVERS=~/karma-clients.txt ./hosts.sh cat ~/karma-eval/100users-set1-alt25.tenant* | grep -i exception
