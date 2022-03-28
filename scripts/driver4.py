@@ -255,7 +255,7 @@ if __name__ == "__main__":
     print(prefix_str + 'p999 latency: ' + str(p999_lat))
     print(prefix_str + 'p9999 latency: ' + str(p9999_lat))
 
-    print(prefix_str + 'Total Allocation: ' + str(sum(allocations)))
+    print(prefix_str + 'Total Useful Allocation: ' + str(sum([min(demands[i], allocations[i]) for i in range(len(allocations))])))
 
     
 
