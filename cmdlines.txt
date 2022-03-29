@@ -13,3 +13,7 @@ JIFFY_SERVERS=~/karma-servers.txt ./hosts.sh /home/ubuntu/deploy/start_storage.s
 JIFFY_SERVERS=~/karma-clients.txt ./hosts.sh cat ~/karma-eval/100users-set1-alt25.tenant* | grep -i error
 
 JIFFY_SERVERS=~/karma-clients.txt ./hosts.sh cat ~/karma-eval/100users-set1-alt25.tenant* | grep -i exception
+
+JIFFY_SERVERS=~/karma-clients.txt ./hosts.sh cat ~/karma-eval/100users-set1-alt25.tenant* | grep -i throughput | wc -l
+
+JIFFY_SERVERS=~/karma-clients.txt ./hosts.sh cat ~/karma-eval/100users-static.tenant* > ~/karma-eval/100users-static.results
