@@ -54,7 +54,9 @@ def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_keys
                 if e.response['Error']['Code'] == 'SlowDown':
                     print('Slowdown error')
                 else:
-                    raise Exception('S3 op failed')
+                    print('S3 op error')
+                    print(e.response['Error']['Code'])
+                    # raise Exception('S3 op failed')
             # if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
             #     raise Exception('S3 op failed')
             elapsed = datetime.datetime.now() - start_time
