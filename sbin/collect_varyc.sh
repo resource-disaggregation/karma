@@ -24,4 +24,11 @@ for c in 9 90 900 9000 90000 900000 9000000; do
     awk -v min_alloc=$min_alloc -v max_alloc=$max_alloc 'BEGIN {print min_alloc/max_alloc}'
 done
 
+echo "Disparity (throughput)"
+for c in 9 90 900 9000 90000 900000 9000000; do
+    median_xput=$(cat ~/karma-eval/$config-c$c.results | grep -i "throughput" | awk '{print $5;}' | sort -n | head -n 50 | tail -n 1)
+    min_xput=$(cat ~/karma-eval/$config-c$c.results | grep -i "throughput" | awk '{print $5;}' | sort -n | head -n 1)
+    awk -v min_xput=$min_xput -v median_xput=$median_xput 'BEGIN {print median_xput/min_xput}'
+done
+
 
