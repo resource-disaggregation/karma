@@ -30,7 +30,7 @@ echo "Disparity (throughput)"
 for g in 8 6 4 2 0; do
     median_xput=$(cat ~/karma-eval/$config-g$g.results | grep -i "throughput" | awk '{print $5;}' | sort -n | head -n 50 | tail -n 1)
     min_xput=$(cat ~/karma-eval/$config-g$g.results | grep -i "throughput" | awk '{print $5;}' | sort -n | head -n 1)
-    awk -v min_xput=$min_xput -v median_xput=$median_xput 'BEGIN {print median_alloc/min_xput}'
+    awk -v min_xput=$min_xput -v median_xput=$median_xput 'BEGIN {print median_xput/min_xput}'
 done
 
 
