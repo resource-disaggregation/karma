@@ -20,8 +20,9 @@ int64_t block_client::get_client_id() {
   return client_->get_client_id();
 }
 
-void block_client::connect(const std::string &host, int port, int block_id, int timeout_ms) {
+void block_client::connect(const std::string &host, int port, int block_id, int timeout_ms, int block_seq_no) {
   block_id_ = block_id;
+  block_seq_no_ = block_seq_no;
   auto sock = std::make_shared<TSocket>(host, port);
   if (timeout_ms > 0)
     sock->setRecvTimeout(timeout_ms);
@@ -49,11 +50,11 @@ bool block_client::is_connected() const {
 }
 
 void block_client::command_request(const sequence_id &seq, const std::vector<std::string> &args) {
-  client_->command_request(seq, block_id_, args);
+  client_->command_request(seq, block_id_, inject_seq_no(args));
 }
 
 void block_client::send_run_command(const int32_t block_id, const std::vector<std::string> &arguments) {
-  client_->send_run_command(block_id, arguments);
+  client_->send_run_command(block_id, inject_seq_no(arguments));
 }
 
 void block_client::recv_run_command(std::vector<std::string> &_return) {
@@ -89,6 +90,20 @@ int64_t block_client::command_response_reader::recv_response(std::vector<std::st
     return result.seq.client_seq_no;
   }
   throw TApplicationException(TApplicationException::MISSING_RESULT, "Command failed: unknown result");
+}
+
+std::vector<std::string> block_client::inject_seq_no(const std::vector<std::string> &args) {
+  std::vector<std::string> res;
+  if(args.size() == 0) {
+    return res;
+  }
+  res.push_back(args[0]);
+  res.push_back("$block_seq_no$");
+  res.push_back(std::to_string(block_seq_no_));
+  for(int i = 1; i < args.size(); i++) {
+    res.push_back(args[i]);
+  }
+  return res;
 }
 
 }

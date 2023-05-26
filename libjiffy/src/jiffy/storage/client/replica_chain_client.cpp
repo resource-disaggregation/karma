@@ -42,13 +42,13 @@ void replica_chain_client::connect(const directory::replica_chain &chain, int ti
   chain_ = chain;
   timeout_ms_ = timeout_ms;
   auto h = block_id_parser::parse(chain_.block_ids.front());
-  head_.connect(h.host, h.service_port, h.id, timeout_ms);
+  head_.connect(h.host, h.service_port, h.id, timeout_ms, h.block_seq_no);
   seq_.client_id = head_.get_client_id();
   if (chain_.block_ids.size() == 1) {
     tail_ = head_;
   } else {
     auto t = block_id_parser::parse(chain_.block_ids.back());
-    tail_.connect(t.host, t.service_port, t.id, timeout_ms);
+    tail_.connect(t.host, t.service_port, t.id, timeout_ms, h.block_seq_no);
   }
   response_reader_ = tail_.get_command_response_reader(seq_.client_id);
   in_flight_ = false;

@@ -64,7 +64,7 @@ class block_client {
    * @param timeout_ms Timeout
    */
 
-  void connect(const std::string &hostname, int port, int block_id, int timeout_ms = 1000);
+  void connect(const std::string &hostname, int port, int block_id, int timeout_ms = 1000, int block_seq_no = 0);
 
   /**
    * @brief Disconnect server
@@ -109,6 +109,9 @@ class block_client {
   void recv_run_command(std::vector<std::string> &_return);
 
  private:
+  
+  std::vector<std::string> inject_seq_no(const std::vector<std::string> &args); 
+
   /* Transport */
   std::shared_ptr<apache::thrift::transport::TTransport> transport_{};
   /* Protocol */
@@ -117,6 +120,7 @@ class block_client {
   std::shared_ptr<thrift_client> client_{};
   /* Block identifier */
   int block_id_{-1};
+  int block_seq_no_{0};
 };
 
 }
