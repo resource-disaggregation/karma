@@ -14,6 +14,7 @@ import queue
 import boto3
 import uuid
 import random
+import string
 
 # S3_READ_LAT = 0.0121
 # S3_WRITE_LAT = 0.0258
@@ -195,138 +196,111 @@ def get_allocations(filename, t):
 
     return allocs[t]
 
+def perform_accesses(in_jiffy, local_random, jiffy_fd, s3, backing_path, s3_key, block_size, buf, duration, stats):
+    begin_ts = datetime.datetime.now()
+    while ((datetime.datetime.now() - begin_ts).total_seconds() < duration):
+        if in_jiffy:
+            jiffy_fd.seek(0)
+            start_time = datetime.datetime.now()
+            if(local_random.random() < 0.5):
+                jiffy_fd.read(block_size)
+            else:
+                jiffy_fd.write(buf)
+            elapsed = datetime.datetime.now() - start_time
+            stats['latency_sum'] += elapsed.total_seconds()
+            stats['jiffy_ops'] += 1
+        else:
+            # S3
+            start_time = datetime.datetime.now()
+            if(local_random.random() < 0.5):
+                resp = s3.get_object(Bucket=backing_path, Key=s3_key)
+            else:
+                resp = s3.put_object(Bucket=backing_path, Key=s3_key, Body=buf)
+            if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+                raise Exception('S3 op failed')
+            elapsed = datetime.datetime.now() - start_time
+            stats['latency_sum'] += elapsed.total_seconds()
+            stats['persistent_ops'] += 1
 
+        stats['total_ops'] += 1
+
+
+# Single client thread
 if __name__ == "__main__":
     dir_host = sys.argv[1]
     dir_porta = int(sys.argv[2])
     dir_portb = int(sys.argv[3])
-    block_size = int(sys.argv[7])
-    backing_path = sys.argv[8]
-    tenant_id = sys.argv[4]
-    para = int(sys.argv[5])
-    fair_share = 100
-    demands = get_demands(sys.argv[6], fair_share, tenant_id)
+    block_size = int(sys.argv[4])
+    backing_path = sys.argv[5]
+    tenant_id = sys.argv[6]
+    block_id = int(sys.argv[7])
+    fair_share = int(sys.argv[8])
+    if sys.argv[9] == 'foobar':
+        demands = [1, 1, 1, 1, 1]
+    else:
+        demands = get_demands(sys.argv[9], fair_share, tenant_id)
     # demands = [1, 1, 1, 1, 1]
     dur_epoch = 1
-    oracle = bool(int(sys.argv[9]))
     selfish = bool(int(sys.argv[10]))
-    allocations = get_allocations(sys.argv[11], tenant_id)
-    capacity = int(sys.argv[12])
-    # allocations = [1, 1, 1, 1, 1]
-
-    # Create queues
-    karma_queues = []
-    for i in range(para):
-        karma_queues.append(Queue())
-
-    for i in range(para):
-        karma_queues[i].cancel_join_thread()
-
-    open_events = []
-    for i in range(para):
-        open_events.append(Event())
-
-    results = Queue()
-    quit_signal = Event()
+    if sys.argv[11] == 'foobar':
+        allocations = [1, 1, 1, 1, 1]
+    else:    
+        allocations = get_allocations(sys.argv[11], tenant_id)
+    
+    # capacity = int(sys.argv[12])
 
     client = JiffyClient(dir_host, dir_porta, dir_portb)
     print('Jiffy client connected')
 
-    # Pre-create files
-    max_files = capacity
-    for i in range(max_files):
-        filename = '/%s/block%d.txt' % (tenant_id, i)
-        client.open_or_create_file(filename, 'local://tmp')
-    print('Pre-created files')
+    # Create block in Jiffy
+    filename = '/%s/block%d.txt' % (tenant_id, block_id)
+    jiffy_fd = client.open_or_create_file(filename, 'local://tmp')
+    print('Created jiffy file')
 
-    # Create S3 map
-    s3_tenant_id = uuid.uuid4().hex
-    s3_map = {}
-    max_wss = max(demands)
-    for x in range(max_wss):
-        s3_map[x] = uuid.uuid4().hex
-        
+    local_random = random.Random()
+    local_random.seed(1995 + int(tenant_id))
 
-    # Create workers
-    workers = []
-    for i in range(para):
-        p = Process(target=worker, args=(quit_signal, karma_queues[i], results, dir_host, dir_porta, dir_portb, block_size, backing_path, open_events[i], tenant_id, selfish, max_files, s3_tenant_id, s3_map, fair_share))
-        workers.append(p)
+    # Create block in S3
+    s3_tenant_id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+    s3_block_id = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
+    s3 = boto3.client('s3')
+    buf = 'a' * block_size
 
-    # Start workers
-    for i in range(para):
-        workers[i].start()
+    resp = s3.put_object(Bucket=backing_path, Key=s3_tenant_id + '/' + s3_block_id, Body=buf)
+    if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
+        raise Exception('Initial S3 write failed')
+    print('Created S3 key')
 
-    print('Started workers')
+    stats = {}
+    stats['total_ops'] = 0
+    stats['latency_sum'] = 0
+    stats['jiffy_ops'] = 0
+    stats['persistent_ops'] = 0
+    # Microsecond scale histogram upto 100ms
+    stats['latency_hist'] = [0 for _ in range(100000)]
 
 
-    # Wait for workers to open files
-    for i in range(para):
-        open_events[i].wait()
-
-    print('Workers opened files')
-
-    time_start = time.time()
-
+    # Main loop
     for e in range(len(demands)):
         cur_demand = demands[e]
         cur_allocation = allocations[e]
-        print('Epoch ' + str(e) + ', demand=' + str(cur_demand) +', alloc='+ str(cur_allocation))
-
-        # Send WSS and allocation updates to all workers 
-        for i in range(para):
-            karma_queues[i].put({'op': 'update', 'wss': cur_demand, 'alloc': cur_allocation})
-
-        time.sleep(dur_epoch)
-
-
-    for i in range(para):
-        karma_queues[i].put({'op': 'quit'})
-    
-    quit_signal.set()
-    print('Epochs complete')
-
-    time_end = time.time()
-    
-
-    # Wait for workers to finish
-    for i in range(para):
-        karma_queues[i].close()
-        workers[i].join()
-
+        if cur_demand > block_id:
+            perform_accesses(cur_allocation > block_id, local_random, jiffy_fd, s3, backing_path, s3_tenant_id + '/' + s3_block_id, block_size, buf, dur_epoch, stats)
+        else:
+            time.sleep(dur_epoch)
 
 
     # Get stats
-    lat_sum = 0
-    lat_count = 0
-    jiffy_blocks = 0
-    persistent_blocks = 0
-    total_ops = 0
-    good_ops = 0
-    normal_ops = 0
-    for i in range(para):
-        res = results.get()
-        lat_sum += res['lat_sum']
-        lat_count += res['lat_count']
-        jiffy_blocks += res['jiffy_blocks']
-        persistent_blocks += res['persistent_blocks']
-        total_ops += res['total_ops']
-        good_ops += res['good_ops']
-        normal_ops += res['normal_ops']
-
+    num_epochs = len(demands)
+    total_duration = num_epochs*dur_epoch
 
     type_str = 'selfish' if selfish else 'alt'
     prefix_str = '<' + tenant_id + '>' + ' [' + type_str + '] '
-    print(prefix_str + "Execution time: " + str(time_end -  time_start))
-    print(prefix_str + 'Average latency: ' + str(float(lat_sum)/lat_count))
-    print(prefix_str + 'Latency sum: ' + str(lat_sum))
-    print(prefix_str + 'Latency count: ' + str(lat_count))
-    print(prefix_str + 'Jiffy ops: ' + str(jiffy_blocks))
-    print(prefix_str + 'Persistent ops: ' + str(persistent_blocks))
-    print(prefix_str + 'Total ops: ' + str(total_ops))
-    print(prefix_str + 'Throughput: ' + str(float(total_ops)/(time_end-time_start)))
-    print(prefix_str + 'Goodput: ' + str(float(good_ops)/(time_end-time_start)))
-    print(prefix_str + 'Normalput: ' + str(float(normal_ops)/(time_end-time_start)))
+    print(prefix_str + 'Average latency: ' + str(float(stats['latency_sum'])/stats['total_ops']))
+    print(prefix_str + 'Jiffy ops: ' + str(stats['jiffy_ops']))
+    print(prefix_str + 'Persistent ops: ' + str(stats['persistent_ops']))
+    print(prefix_str + 'Total ops: ' + str(stats['total_ops']))
+    print(prefix_str + 'Throughput: ' + str(float(stats['total_ops'])/total_duration))
 
     
 
