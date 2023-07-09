@@ -18,6 +18,7 @@ option(USE_SYSTEM_OPENSSL "Use system OpenSSL" ON)
 option(USE_SYSTEM_ZLIB "Use system Zlib" ON)
 option(BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(GENERATE_THRIFT "Generate thrift files" OFF)
+option(BUILD_KARMA_CLIENT "Build karma client" ON)
 
 message(STATUS "----------------------------------------------------------")
 message(STATUS "${PROJECT_NAME} version:                            ${PROJECT_VERSION}")

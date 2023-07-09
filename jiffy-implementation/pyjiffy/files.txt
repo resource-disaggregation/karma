@@ -1,0 +1,1 @@
+/usr/local/lib/python3.5/dist-packages/pyjiffy-2022.3-py3.5.egg

@@ -8,6 +8,7 @@
 #include "jiffy/storage/client/file_client.h"
 #include "jiffy/storage/client/fifo_queue_client.h"
 #include "jiffy/storage/client/data_structure_listener.h"
+#include "jiffy/storage/client/dba_client.h"
 
 namespace jiffy {
 namespace client {
@@ -84,6 +85,9 @@ class jiffy_client {
                                                     int32_t flags = 0,
                                                     int32_t permissions = directory::perms::all(),
                                                     const std::map<std::string, std::string> &tags = {});
+
+  // Create direct block access client
+  std::shared_ptr<storage::dba_client> create_dba_client(std::size_t block_size);
 
   /**
    * @brief Create fifo queue

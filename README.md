@@ -1,41 +1,32 @@
-# Jiffy
+# Karma: Resource Allocation for Dynamic Demands
 
-A virtual memory abstraction for serverless architectures. See [docs](docs) for detailed documentation.
+This repository contains open source code for Karma, a new resource allocation mechanism for dynamic demands. Karma introduces a new credit-based resource allocation algorithm with powerful theoretical guarantees related to Pareto efficiency, strategy-proofness, and fairness under dynamic demands, that have been shown to translate well into practice. For a full technical description of Karma, please refer to our [OSDI'23 paper](https://www.usenix.org/conference/osdi23/presentation/vuppalapati).
 
-## Installation
+## Components
 
-Before you can install Jiffy, make sure you have the following prerequisites:
+This repository contains the following three components:
 
-- MacOS X, CentOS, or Ubuntu(16.04 or later)
-- C++ compiler that supports C++11 standard (e.g., GCC 5.3 or later)
-- CMake 3.9 or later
+- [algorithm/](algorithm/): Efficient implementation of the Karma algorithm provided as a library for easy integration with applications.
+- [simulator/](simulator/): Simulator that can execute Karma and other relevant schemes over input demand traces for easy testing and exploration.
+- [jiffy-implementation/](jiffy-implementation/): End-to-end implementation of Karma on top of a distributed elastic memory system ([Jiffy](https://github.com/resource-disaggregation/jiffy))
 
-For Python client, you will additionally require:
+## Contact
 
-- Python 2.7 or later, 3.6 or later
-- Python Packages: setuptools
+Midhul Vuppalapati ([midhul@cs.cornell.edu](mailto:midhul@cs.cornell.edu))
 
-For java client, you will additionally require:
+## Citation
 
-- Java 1.7 or later
-- Maven 3.0.4 or later
-
-### Source build
-
-To download and install Jiffy, use the following commands:
-```bash
-git clone https://github.com/ucbrise/jiffy.git
-cd jiffy
-mkdir -p build
-cd build
-cmake ..
-make -j && make test && make install
 ```
-For macOS Mojave users, the headers are no longer installed under `/usr/include` by default.
-Please run the following command in terminal and follow the installation instructions before building:
-
-```bash
-open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
+@inproceedings {karma-osdi23,
+author = {Midhul Vuppalapati and Giannis Fikioris and Rachit Agarwal and Asaf Cidon and Anurag Khandelwal and {\'E}va Tardos},
+title = {Karma: Resource Allocation for Dynamic Demands},
+booktitle = {17th USENIX Symposium on Operating Systems Design and Implementation (OSDI 23)},
+year = {2023},
+isbn = {978-1-939133-34-2},
+address = {Boston, MA},
+pages = {645--662},
+url = {https://www.usenix.org/conference/osdi23/presentation/vuppalapati},
+publisher = {USENIX Association},
+month = jul,
+}
 ```
-
-Go [here](docs/src/quick_start.md) for a quick-start guide!

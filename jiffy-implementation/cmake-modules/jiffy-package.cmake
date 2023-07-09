@@ -1,5 +1,5 @@
 # whether package contains all development files or only runtime files
-set (DEVEL @INSTALL_HEADERS@)
+set (DEVEL )
 
 # ------------------------------------------------------------------------------
 # Debian package

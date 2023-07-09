@@ -55,6 +55,10 @@ if (BUILD_BENCHMARKS)
   add_subdirectory(benchmark)
 endif ()
 
+if(BUILD_KARMA_CLIENT)
+  add_subdirectory(karma-client)
+endif ()
+
 if (BUILD_DOC)
   add_subdirectory(docs)
 endif ()

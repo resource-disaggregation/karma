@@ -15,7 +15,7 @@ make
 
 ## Usage
 
-To use the allocator module, simply include `include/karma_allocator.h` in your source files and link `libkarma` (geenrated in `build/`) to your executable. The following is a code snippet that initializes an instance of the allocator and invokes its APIs (for full example, see `example/`):
+To use the allocator module, simply include `include/karma_allocator.h` in your source files and link `libkarma` (generated in `build/`) to your executable. The following is a code snippet that initializes an instance of the allocator and invokes its APIs (for full example, see `example/`):
 
 ```cpp
 // Initialize Karma allocator with 6 slices and alpha=0.5

@@ -71,6 +71,11 @@ std::shared_ptr<storage::file_client> jiffy_client::create_file(const std::strin
   return std::make_shared<storage::file_client>(fs_, path, s);
 }
 
+std::shared_ptr<storage::dba_client> jiffy_client::create_dba_client(std::size_t block_size) {
+  jiffy::directory::data_status dstatus;
+  return std::make_shared<storage::dba_client>(fs_, "", dstatus, 1000, block_size);
+}
+
 std::shared_ptr<storage::fifo_queue_client> jiffy_client::create_fifo_queue(const std::string &path,
                                                                             const std::string &backing_path,
                                                                             int32_t num_blocks,
