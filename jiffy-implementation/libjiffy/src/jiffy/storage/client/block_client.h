@@ -102,6 +102,9 @@ class block_client {
    */
   void send_run_command(const int32_t block_id, const std::vector<std::string> &arguments);
 
+
+  void send_run_command(const std::vector<std::string> &arguments);
+
   /**
    * @brief Receive response from run command
    * @param _return Response

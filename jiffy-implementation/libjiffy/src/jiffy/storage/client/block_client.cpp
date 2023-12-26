@@ -57,6 +57,10 @@ void block_client::send_run_command(const int32_t block_id, const std::vector<st
   client_->send_run_command(block_id, inject_seq_no(arguments));
 }
 
+void block_client::send_run_command(const std::vector<std::string> &arguments) {
+  client_->send_run_command(block_id_, inject_seq_no(arguments));
+}
+
 void block_client::recv_run_command(std::vector<std::string> &_return) {
   client_->recv_run_command(_return);
 }

@@ -34,7 +34,7 @@ std::shared_ptr<replica_chain_client> dba_client::get_block_client(const std::st
 
 int dba_client::read(const std::string &bid, std::string& buf, size_t offset, size_t size) {
   if(offset + size > block_size_) {
-     return -1;
+     return -EINVAL;
   }
 
   // Issue read via block client
@@ -44,16 +44,23 @@ int dba_client::read(const std::string &bid, std::string& buf, size_t offset, si
   bclient->send_command(args);
 
   // receive read response
-  auto previous_size = buf.size();
-  buf += bclient->recv_response().back();
-  auto after_size = buf.size();
-  return static_cast<int>(after_size - previous_size);
+  auto resp = bclient->recv_response();
+  if(resp.front() == "!ok") {
+    auto previous_size = buf.size();
+    buf += resp.back();
+    auto after_size = buf.size();
+    return static_cast<int>(after_size - previous_size);
+  } else if (resp.front() == "!stale_seq_no") {
+    return -EACCES;
+  } else {
+    return -EPROTO;
+  }
 }
 
 int dba_client::write(const std::string &bid, size_t offset, const std::string &data) {
 
   if(offset + data.size() > block_size_) {
-     return -1;
+     return -EINVAL;
   }
 
   // Issue write via block client
@@ -63,8 +70,14 @@ int dba_client::write(const std::string &bid, size_t offset, const std::string &
   bclient->send_command(args);
 
   // wait for write response
-  bclient->recv_response();
-  return static_cast<int>(data.size());
+  auto resp = bclient->recv_response();
+  if(resp.front() == "!ok") {
+    return static_cast<int>(data.size());
+  } else if (resp.front() == "!stale_seq_no") {
+    return -EACCES;
+  } else {
+    return -EPROTO;
+  }
 }
 
 void dba_client::refresh() {

@@ -1,6 +1,7 @@
 #ifndef JIFFY_DBA_CLIENT_H
 #define JIFFY_DBA_CLIENT_H
 
+#include <cerrno>
 #include "jiffy/directory/client/directory_client.h"
 #include "jiffy/storage/client/replica_chain_client.h"
 #include "jiffy/utils/client_cache.h"
@@ -25,12 +26,18 @@ class dba_client : public data_structure_client {
    */
   virtual ~dba_client() = default;
   
-  // Returns number of bytes read
-  // returns -1 if offset is out of bounds
+  // Returns number of bytes read if successful (result appended to buf)
+  // returns negative value on error:
+  // -EINVAL: invalid arguments
+  // -EACCES: block ownsership changed (stale sequence number)
+  // -EPROTO: other errors 
   int read(const std::string &bid, std::string& buf, size_t offset, size_t size);
 
-  // Returns number of bytes written
-  // returns -1 if offset is out of bounds 
+  // Returns number of bytes written if successful
+  // returns negative value on error:
+  // -EINVAL: invalid arguments
+  // -EACCES: block ownsership changed (stale sequence number)
+  // -EPROTO: other errors  
   int write(const std::string &bid, size_t offset, const std::string &data);
 
   void refresh() override;

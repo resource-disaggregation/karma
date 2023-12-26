@@ -61,7 +61,8 @@ void replica_chain_client::send_command(const std::vector<std::string> &args) {
   if (OPS_[args[0]].is_accessor()) {
     try {
       accessor_ = true;
-      cmd_client_.at(args.front())->send_run_command(std::stoi(string_utils::split(chain_.tail(), ':').back()), args);
+      // cmd_client_.at(args.front())->send_run_command(std::stoi(string_utils::split(chain_.tail(), ':').back()), args);
+      cmd_client_.at(args.front())->send_run_command(args);
     } catch (std::exception &e) {
       send_run_command_exception_ = true;
     }

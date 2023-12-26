@@ -121,6 +121,7 @@ int32_t partition::extract_block_seq_no(const arg_list &args, arg_list &out_list
 void partition::run_command(response &_return, const arg_list &_args) {
   arg_list args;
   int32_t block_seq_no = extract_block_seq_no(_args, args);
+  // LOG(log_level::info) << "run_command seq no: " << block_seq_no <<  ", current seq no: " << block_seq_no_;
   if(block_seq_no < block_seq_no_){
     _return.emplace_back("!stale_seq_no");
     return;
